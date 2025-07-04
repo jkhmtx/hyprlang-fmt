@@ -22,18 +22,43 @@
       overlays = [rust-overlay.overlays.default];
     };
 
-    rustStable = pkgs.rust-bin.nightly.latest.default.override {
-      extensions = ["rust-src" "cargo" "rustc" "rustc-codegen-cranelift-preview"];
+    projectInputs = {
+      inherit pkgs;
+      projectNamespace = {
+        rust = pkgs.rust-bin.nightly.latest.minimal.override {
+          extensions = [
+            "cargo"
+            "clippy"
+            "rust-src"
+            "rustc"
+            "rustc-codegen-cranelift-preview"
+            "rustfmt"
+          ];
+        };
+        scripts = {
+          fix = import ./scripts/bin/fix/main.nix projectInputs;
+
+          format = {
+            format-nix = import ./scripts/bin/format-nix/main.nix projectInputs;
+            format-rust = import ./scripts/bin/format-rust/main.nix projectInputs;
+            format-shell = import ./scripts/bin/format-shell/main.nix projectInputs;
+            format-yaml = import ./scripts/bin/format-yaml/main.nix projectInputs;
+          };
+
+          lint = {
+            lint-github-actions = import ./scripts/bin/lint-github-actions/main.nix projectInputs;
+            lint-rust = import ./scripts/bin/lint-rust/main.nix projectInputs;
+            lint-shell = import ./scripts/bin/lint-shell/main.nix projectInputs;
+          };
+
+          local-ci = import ./scripts/bin/local-ci/main.nix projectInputs;
+        };
+      };
     };
 
     formatter = pkgs.alejandra;
-    shell = import ./shell.nix {
-      inherit pkgs;
-      inherit rustStable;
-    };
-    package = import ./package.nix {
-      inherit pkgs;
-    };
+    shell = import ./shell.nix projectInputs;
+    package = import ./package.nix projectInputs;
   in {
     inherit shell;
 
