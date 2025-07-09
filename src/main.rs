@@ -171,6 +171,14 @@ impl From<Pair<'_, Rule>> for Node {
 }
 
 impl Node {
+    fn maybe(tag: Option<&Pair<Rule>>) -> Option<Node> {
+        match tag {
+            Some(tag) if tag.as_rule() == Rule::EOI => None,
+            Some(tag) => Some(Node::from(tag)),
+            _ => None,
+        }
+    }
+
     fn new_comment(tag: &Pair<Rule>, level: u8) -> Node {
         Node::Comment {
             block: Block {
@@ -281,34 +289,26 @@ fn get_file_nodes(pair: Pair<Rule>) -> Vec<Node> {
 
     let mut inner = pair.into_inner();
     loop {
-        let tag = match inner.next() {
-            Some(tag) if tag.as_rule() == Rule::EOI => None,
-            Some(tag) => Some(tag),
-            _ => None,
-        };
+        let node = Node::maybe(inner.next().as_ref());
 
-        if tag.is_none() {
+        if node.is_none() {
             break;
         }
 
-        let tag = tag.expect("infallible");
+        let node = node.expect("infallible");
 
-        let mut block = vec![Node::from(tag)];
+        let mut block = vec![node];
 
         loop {
-            let tag = match inner.next() {
-                Some(tag) if tag.as_rule() == Rule::EOI => None,
-                Some(tag) => Some(tag),
-                _ => None,
-            };
+            let node = Node::maybe(inner.next().as_ref());
 
-            if tag.is_none() {
+            if node.is_none() {
                 break;
             }
 
-            let tag = tag.expect("infallible");
+            let node = node.expect("infallible");
 
-            block.push(Node::from(tag));
+            block.push(node);
 
             let mut block_iter = block.iter().rev();
             if let (Some(last), Some(near_last)) = (block_iter.next(), block_iter.next()) {
