@@ -6,8 +6,8 @@
 #![warn(clippy::style)]
 #![warn(clippy::suspicious)]
 
-use pest::Parser;
 use pest::iterators::Pair;
+use pest::Parser;
 use pest_derive::Parser;
 use std::fmt;
 use std::fs::read_to_string;
@@ -41,6 +41,7 @@ fn text(tag: &Pair<Rule>) -> String {
 //
 // ident         = foo             # trailing 1
 // another_ident = much_longer_bar # trailing 2
+#[derive(PartialEq)]
 struct Block {
     // The longest identifier in the block's length
     lhs_max_length: u8,
@@ -146,6 +147,26 @@ impl fmt::Display for Node {
             Node::Newline => formatter.write_str("\n"),
             Node::EndOfInput => unreachable!(),
         }
+    }
+}
+
+impl From<&'_ Pair<'_, Rule>> for Node {
+    fn from(tag: &Pair<Rule>) -> Node {
+        match tag.as_rule() {
+            Rule::comment => Node::new_comment(tag, 0),
+            Rule::newline => Node::Newline,
+            Rule::command => Node::new_command(tag, 0),
+            Rule::variable_assignment => Node::new_variable_assignment(tag),
+            Rule::category => Node::new_category(tag, 0),
+            Rule::EOI => Node::EndOfInput,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl From<Pair<'_, Rule>> for Node {
+    fn from(tag: Pair<Rule>) -> Node {
+        Node::from(&tag)
     }
 }
 
@@ -257,32 +278,61 @@ impl Node {
 
 fn get_file_nodes(pair: Pair<Rule>) -> Vec<Node> {
     let mut nodes = Vec::new();
-    for tag in pair.into_inner() {
-        match tag.as_rule() {
-            Rule::EOI => {
-                nodes.push(Node::EndOfInput);
+
+    let mut inner = pair.into_inner();
+    loop {
+        let tag = match inner.next() {
+            Some(tag) if tag.as_rule() == Rule::EOI => None,
+            Some(tag) => Some(tag),
+            _ => None,
+        };
+
+        if tag.is_none() {
+            break;
+        }
+
+        let tag = tag.expect("infallible");
+
+        let mut block = vec![Node::from(tag)];
+
+        loop {
+            let tag = match inner.next() {
+                Some(tag) if tag.as_rule() == Rule::EOI => None,
+                Some(tag) => Some(tag),
+                _ => None,
+            };
+
+            if tag.is_none() {
+                break;
             }
-            Rule::comment => {
-                nodes.push(Node::new_comment(&tag, 0));
-            }
-            Rule::newline => {
-                nodes.push(Node::Newline);
-            }
-            Rule::command => {
-                nodes.push(Node::new_command(&tag, 0));
-            }
-            Rule::variable_assignment => {
-                nodes.push(Node::new_variable_assignment(&tag));
-            }
-            Rule::category => {
-                nodes.push(Node::new_category(&tag, 0));
-            }
-            _ => {
-                unreachable!()
+
+            let tag = tag.expect("infallible");
+
+            block.push(Node::from(tag));
+
+            let mut block_iter = block.iter().rev();
+            if let (Some(last), Some(near_last)) = (block_iter.next(), block_iter.next()) {
+                // Consume until non-newline
+                if *last == Node::Newline && *near_last == Node::Newline {
+                    for tag in inner.by_ref() {
+                        let tag = match tag.as_rule() {
+                            Rule::newline => None,
+                            _ => Some(tag),
+                        };
+
+                        if let Some(tag) = tag {
+                            block.push(Node::from(tag));
+                            break;
+                        }
+                    }
+
+                    break;
+                }
             }
         }
-    }
 
+        nodes.extend(block);
+    }
     nodes
 }
 
