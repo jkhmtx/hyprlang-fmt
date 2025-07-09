@@ -22,22 +22,51 @@ fn text(tag: &Pair<Rule>) -> String {
     tag.as_span().as_str().trim_end_matches(' ').to_string()
 }
 
+// Blocks are lines of code localized by either:
+//   1. Contiguous spacing
+//   2. Category enclosure
+//
+// A Block is used for ensuring that the infix spacing
+// between identifiers and '=' on the left-hand side,
+// and '=' and expressions on the right-hand side is
+// consistent.
+//
+// This spacing also applies to trailing comments,
+// which are aligned by the longest statement in a
+// block.
+//
+// Example:
+// ident = foo # trailing 1
+// another_ident = much_longer_bar # trailing 2
+//
+// ident         = foo             # trailing 1
+// another_ident = much_longer_bar # trailing 2
+struct Block {
+    // The longest identifier in the block's length
+    lhs_max_length: u8,
+    // The longest statement in the block's length
+    max_length: u8,
+}
+
 #[derive(PartialEq)]
 enum Node {
     Comment {
-        tokens: String,
+        block: Block,
         level: u8,
+        tokens: String,
     },
     Command {
+        block: Block,
+        comment: Option<String>,
         ident: String,
         level: u8,
         parts: Vec<String>,
-        comment: Option<String>,
     },
     VariableAssignment {
-        ident: String,
-        expression: String,
+        block: Block,
         comment: Option<String>,
+        expression: String,
+        ident: String,
     },
     Category {
         ident: String,
@@ -54,15 +83,20 @@ impl fmt::Display for Node {
             return formatter.write_str("");
         }
         match self {
-            Node::Comment { level, tokens } => {
+            Node::Comment {
+                block: _,
+                level,
+                tokens,
+            } => {
                 formatter.write_str(&" ".repeat((TAB_WIDTH * level).into()))?;
                 formatter.write_str(tokens)
             }
             Node::Command {
+                block: _,
+                comment,
                 ident,
                 level,
                 parts,
-                comment,
             } => {
                 formatter.write_str(&" ".repeat((TAB_WIDTH * level).into()))?;
                 write!(formatter, "{} =", &ident)?;
@@ -82,9 +116,10 @@ impl fmt::Display for Node {
                 formatter.write_str("")
             }
             Node::VariableAssignment {
+                block: _,
+                comment,
                 ident,
                 expression,
-                comment,
             } => {
                 write!(formatter, "{} = {}", &ident, &expression)?;
                 if let Some(c) = &comment {
@@ -117,8 +152,12 @@ impl fmt::Display for Node {
 impl Node {
     fn new_comment(tag: &Pair<Rule>, level: u8) -> Node {
         Node::Comment {
-            tokens: text(tag),
+            block: Block {
+                lhs_max_length: 0,
+                max_length: 0,
+            },
             level,
+            tokens: text(tag),
         }
     }
 
@@ -141,10 +180,14 @@ impl Node {
         }
 
         Node::Command {
+            block: Block {
+                lhs_max_length: 0,
+                max_length: 0,
+            },
+            comment,
             ident: ident.expect("command must have an ident"),
             level,
             parts,
-            comment,
         }
     }
 
@@ -168,9 +211,13 @@ impl Node {
             }
         }
         Node::VariableAssignment {
-            ident: ident.expect("variable_assignment must have an ident"),
-            expression: expression.expect("variable_assignment must have an expression"),
+            block: Block {
+                lhs_max_length: 0,
+                max_length: 0,
+            },
             comment,
+            expression: expression.expect("variable_assignment must have an expression"),
+            ident: ident.expect("variable_assignment must have an ident"),
         }
     }
 
