@@ -12,8 +12,6 @@ use pest_derive::Parser;
 use std::fmt;
 use std::fs::read_to_string;
 
-const TAB_WIDTH: u8 = 4;
-
 #[derive(Parser)]
 #[grammar = "pest/grammar.pest"]
 pub struct HyprlangParser;
@@ -43,36 +41,63 @@ fn text(tag: &Pair<Rule>) -> String {
 // another_ident = much_longer_bar # trailing 2
 #[derive(PartialEq)]
 struct Block {
+    // The indentation level of the block
+    level: u8,
     // The longest identifier in the block's length
     lhs_max_length: u8,
     // The longest statement in the block's length
     max_length: u8,
+
+    nodes: Vec<Node>,
+
+    config: Config,
+}
+
+impl Block {
+    fn new(nodes: Vec<Node>, level: u8, config: Config) -> Block {
+        Block {
+            level,
+            config,
+            lhs_max_length: 0,
+            max_length: 0,
+            nodes,
+        }
+    }
+}
+
+impl fmt::Display for Block {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for node in &self.nodes {
+            if node == &Node::Newline {
+                write!(formatter, "{}", &node)?;
+            } else {
+                formatter.write_str(&" ".repeat((self.config.tab_width * self.level).into()))?;
+                write!(formatter, "{}", &node)?;
+            }
+        }
+
+        formatter.write_str("")
+    }
 }
 
 #[derive(PartialEq)]
 enum Node {
     Comment {
-        block: Block,
-        level: u8,
         tokens: String,
     },
     Command {
-        block: Block,
         comment: Option<String>,
         ident: String,
-        level: u8,
         parts: Vec<String>,
     },
     VariableAssignment {
-        block: Block,
         comment: Option<String>,
         expression: String,
         ident: String,
     },
     Category {
         ident: String,
-        level: u8,
-        inner: Vec<Node>,
+        block: Block,
     },
     Newline,
     EndOfInput,
@@ -84,22 +109,12 @@ impl fmt::Display for Node {
             return formatter.write_str("");
         }
         match self {
-            Node::Comment {
-                block: _,
-                level,
-                tokens,
-            } => {
-                formatter.write_str(&" ".repeat((TAB_WIDTH * level).into()))?;
-                formatter.write_str(tokens)
-            }
+            Node::Comment { tokens } => formatter.write_str(tokens),
             Node::Command {
-                block: _,
                 comment,
                 ident,
-                level,
                 parts,
             } => {
-                formatter.write_str(&" ".repeat((TAB_WIDTH * level).into()))?;
                 write!(formatter, "{} =", &ident)?;
                 let full_expression = parts
                     .iter()
@@ -117,7 +132,6 @@ impl fmt::Display for Node {
                 formatter.write_str("")
             }
             Node::VariableAssignment {
-                block: _,
                 comment,
                 ident,
                 expression,
@@ -129,19 +143,11 @@ impl fmt::Display for Node {
 
                 formatter.write_str("")
             }
-            Node::Category {
-                ident,
-                level,
-                inner,
-            } => {
-                formatter.write_str(&" ".repeat((TAB_WIDTH * level).into()))?;
-
+            Node::Category { ident, block } => {
                 write!(formatter, "{ident} {{")?;
-                for item in inner {
-                    formatter.write_str(&item.to_string())?;
-                }
-
-                formatter.write_str(&" ".repeat((TAB_WIDTH * level).into()))?;
+                formatter.write_str(&block.to_string())?;
+                formatter
+                    .write_str(&" ".repeat((block.config.tab_width * (block.level - 1)).into()))?;
                 formatter.write_str("}")
             }
             Node::Newline => formatter.write_str("\n"),
@@ -150,47 +156,32 @@ impl fmt::Display for Node {
     }
 }
 
-impl From<&'_ Pair<'_, Rule>> for Node {
-    fn from(tag: &Pair<Rule>) -> Node {
+impl Node {
+    fn new(tag: &Pair<Rule>, config: Config) -> Node {
         match tag.as_rule() {
-            Rule::comment => Node::new_comment(tag, 0),
+            Rule::comment => Node::new_comment(tag),
             Rule::newline => Node::Newline,
-            Rule::command => Node::new_command(tag, 0),
+            Rule::command => Node::new_command(tag),
             Rule::variable_assignment => Node::new_variable_assignment(tag),
-            Rule::category => Node::new_category(tag, 0),
+            Rule::category => Node::new_category(tag, 0, config),
             Rule::EOI => Node::EndOfInput,
             _ => unreachable!(),
         }
     }
-}
 
-impl From<Pair<'_, Rule>> for Node {
-    fn from(tag: Pair<Rule>) -> Node {
-        Node::from(&tag)
-    }
-}
-
-impl Node {
-    fn maybe(tag: Option<&Pair<Rule>>) -> Option<Node> {
+    fn maybe(tag: Option<&Pair<Rule>>, config: Config) -> Option<Node> {
         match tag {
             Some(tag) if tag.as_rule() == Rule::EOI => None,
-            Some(tag) => Some(Node::from(tag)),
+            Some(tag) => Some(Node::new(tag, config)),
             _ => None,
         }
     }
 
-    fn new_comment(tag: &Pair<Rule>, level: u8) -> Node {
-        Node::Comment {
-            block: Block {
-                lhs_max_length: 0,
-                max_length: 0,
-            },
-            level,
-            tokens: text(tag),
-        }
+    fn new_comment(tag: &Pair<Rule>) -> Node {
+        Node::Comment { tokens: text(tag) }
     }
 
-    fn new_command(tag: &Pair<Rule>, level: u8) -> Node {
+    fn new_command(tag: &Pair<Rule>) -> Node {
         let mut ident = None;
         let mut parts = Vec::new();
         let mut comment = None;
@@ -209,13 +200,8 @@ impl Node {
         }
 
         Node::Command {
-            block: Block {
-                lhs_max_length: 0,
-                max_length: 0,
-            },
             comment,
             ident: ident.expect("command must have an ident"),
-            level,
             parts,
         }
     }
@@ -240,19 +226,15 @@ impl Node {
             }
         }
         Node::VariableAssignment {
-            block: Block {
-                lhs_max_length: 0,
-                max_length: 0,
-            },
             comment,
             expression: expression.expect("variable_assignment must have an expression"),
             ident: ident.expect("variable_assignment must have an ident"),
         }
     }
 
-    fn new_category(tag: &Pair<Rule>, level: u8) -> Node {
+    fn new_category(tag: &Pair<Rule>, level: u8, config: Config) -> Node {
         let mut ident = None;
-        let mut inner = Vec::new();
+        let mut nodes = Vec::new();
 
         for pair in tag.clone().into_inner() {
             match pair.as_rule() {
@@ -262,20 +244,20 @@ impl Node {
                 Rule::category_inner => {
                     for inner_pair in pair.into_inner() {
                         match inner_pair.as_rule() {
-                            Rule::command => inner.push(Node::new_command(&inner_pair, level + 1)),
-                            Rule::comment => inner.push(Node::new_comment(&inner_pair, level + 1)),
+                            Rule::command => nodes.push(Node::new_command(&inner_pair)),
+                            Rule::comment => nodes.push(Node::new_comment(&inner_pair)),
                             Rule::newline => {
-                                let mut inner_iter = inner.iter().rev();
-                                match (inner_iter.next(), inner_iter.next()) {
+                                let mut nodes_iter = nodes.iter().rev();
+                                match (nodes_iter.next(), nodes_iter.next()) {
                                     // Don't add newlines if the previous two nodes were also newlines
                                     (Some(last), Some(near_last))
                                         if *last == Node::Newline
                                             && *near_last == Node::Newline => {}
-                                    _ => inner.push(Node::Newline),
+                                    _ => nodes.push(Node::Newline),
                                 }
                             }
                             Rule::category => {
-                                inner.push(Node::new_category(&inner_pair, level + 1));
+                                nodes.push(Node::new_category(&inner_pair, level + 1, config));
                             }
                             _ => unreachable!(),
                         }
@@ -287,18 +269,17 @@ impl Node {
 
         Node::Category {
             ident: ident.expect("category must have an ident"),
-            level,
-            inner,
+            block: Block::new(nodes, level + 1, config),
         }
     }
 }
 
-fn get_file_nodes(pair: Pair<Rule>) -> Vec<Node> {
-    let mut nodes = Vec::new();
+fn get_file_blocks(pair: Pair<Rule>, config: Config) -> Vec<Block> {
+    let mut blocks = Vec::new();
 
     let mut inner = pair.into_inner();
     loop {
-        let node = Node::maybe(inner.next().as_ref());
+        let node = Node::maybe(inner.next().as_ref(), config);
 
         if node.is_none() {
             break;
@@ -306,10 +287,10 @@ fn get_file_nodes(pair: Pair<Rule>) -> Vec<Node> {
 
         let node = node.expect("infallible");
 
-        let mut block = vec![node];
+        let mut nodes = vec![node];
 
         loop {
-            let node = Node::maybe(inner.next().as_ref());
+            let node = Node::maybe(inner.next().as_ref(), config);
 
             if node.is_none() {
                 break;
@@ -317,10 +298,10 @@ fn get_file_nodes(pair: Pair<Rule>) -> Vec<Node> {
 
             let node = node.expect("infallible");
 
-            block.push(node);
+            nodes.push(node);
 
-            let mut block_iter = block.iter().rev();
-            if let (Some(last), Some(near_last)) = (block_iter.next(), block_iter.next()) {
+            let mut nodes_iter = nodes.iter().rev();
+            if let (Some(last), Some(near_last)) = (nodes_iter.next(), nodes_iter.next()) {
                 // Consume until non-newline
                 if *last == Node::Newline && *near_last == Node::Newline {
                     for tag in inner.by_ref() {
@@ -330,7 +311,7 @@ fn get_file_nodes(pair: Pair<Rule>) -> Vec<Node> {
                         };
 
                         if let Some(tag) = tag {
-                            block.push(Node::from(tag));
+                            nodes.push(Node::new(&tag, config));
                             break;
                         }
                     }
@@ -340,21 +321,27 @@ fn get_file_nodes(pair: Pair<Rule>) -> Vec<Node> {
             }
         }
 
-        nodes.extend(block);
+        blocks.push(Block::new(nodes, 0, config));
     }
-    nodes
+    blocks
+}
+
+#[derive(PartialEq, Clone, Copy)]
+struct Config {
+    pub tab_width: u8,
 }
 
 fn main() {
     let hypr_conf = read_to_string("testbed/hypr/hyprland.conf").unwrap();
+    let config = Config { tab_width: 2 };
 
     let parse = HyprlangParser::parse(Rule::file, &hypr_conf).unwrap();
 
     for pair in parse {
         match pair.as_rule() {
             Rule::file => {
-                for node in get_file_nodes(pair) {
-                    print!("{node}");
+                for block in get_file_blocks(pair, config) {
+                    print!("{block}");
                 }
             }
             _ => unreachable!(),
