@@ -25,16 +25,23 @@
     projectInputs = {
       inherit pkgs;
       projectNamespace = {
-        rust = pkgs.rust-bin.nightly.latest.minimal.override {
-          extensions = [
-            "cargo"
-            "clippy"
-            "rust-src"
-            "rustc"
-            "rustc-codegen-cranelift-preview"
-            "rustfmt"
-          ];
-        };
+        rust = pkgs.rust-bin.selectLatestNightlyWith (toolchain:
+          toolchain.minimal.override {
+            targets = [
+              "x86_64-apple-darwin"
+              "x86_64-unknown-linux-gnu"
+              "aarch64-apple-darwin"
+              "aarch64-unknown-linux-gnu"
+            ];
+            extensions = [
+              "cargo"
+              "clippy"
+              "rust-src"
+              "rustc"
+              "rustc-codegen-cranelift-preview"
+              "rustfmt"
+            ];
+          });
         scripts = {
           fix = import ./scripts/bin/fix/main.nix projectInputs;
 
@@ -61,6 +68,8 @@
     package = import ./package.nix projectInputs;
   in {
     inherit shell;
+    inherit (pkgs.rustPlatform) buildRustPackage;
+    inherit (projectInputs.projectNamespace) rust;
 
     packages."${system}".default = package;
     formatter."${system}" = formatter;

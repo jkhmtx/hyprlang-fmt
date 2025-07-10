@@ -1,7 +1,16 @@
 {pkgs, ...}:
-pkgs.writeShellApplication {
-  name = "testing-123";
-  text = ''
-    echo "tessting-123"
-  '';
+pkgs.rustPlatform.buildRustPackage {
+  pname = "hyprlang-fmt";
+  version = "0.1";
+
+  src = pkgs.lib.cleanSource ./.;
+
+  cargoHash = "sha256-+jB0Wpbj3vdPZ2mZU7muigbYuOzTONz8U0+cAz31VW0=";
+
+  meta = {
+    description = "A formatter for hyprlang";
+    homepage = "https://github.com/jkhmtx/hyprlang-fmt";
+    license = pkgs.lib.licenses.gpl3;
+    maintainers = [];
+  };
 }
