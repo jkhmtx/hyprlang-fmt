@@ -264,7 +264,16 @@ impl Node {
                         match inner_pair.as_rule() {
                             Rule::command => inner.push(Node::new_command(&inner_pair, level + 1)),
                             Rule::comment => inner.push(Node::new_comment(&inner_pair, level + 1)),
-                            Rule::newline => inner.push(Node::Newline),
+                            Rule::newline => {
+                                let mut inner_iter = inner.iter().rev();
+                                match (inner_iter.next(), inner_iter.next()) {
+                                    // Don't add newlines if the previous two nodes were also newlines
+                                    (Some(last), Some(near_last))
+                                        if *last == Node::Newline
+                                            && *near_last == Node::Newline => {}
+                                    _ => inner.push(Node::Newline),
+                                }
+                            }
                             Rule::category => {
                                 inner.push(Node::new_category(&inner_pair, level + 1));
                             }
