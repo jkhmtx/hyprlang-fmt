@@ -6,12 +6,13 @@
 #![warn(clippy::style)]
 #![warn(clippy::suspicious)]
 
+use clap::Parser as ClapParser;
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
 use std::fmt;
 use std::fmt::Write as _;
-use std::fs::read_to_string;
+use std::io::Read;
 
 #[derive(Parser)]
 #[grammar = "pest/grammar.pest"]
@@ -417,11 +418,28 @@ struct Config {
     pub tab_width: u8,
 }
 
-fn main() {
-    let hypr_conf = read_to_string("testbed/hypr/hyprland.conf").unwrap();
-    let config = Config { tab_width: 4 };
+/// A formatter for the hyprlang language.
+#[derive(ClapParser, Debug)]
+#[command(version)]
+struct Args {
+    /// How many spaces to use for indentation
+    #[arg(short, long, default_value_t = 2)]
+    spaces: u8,
+}
 
-    let parse = HyprlangParser::parse(Rule::file, &hypr_conf).unwrap();
+fn main() {
+    let args = Args::parse();
+
+    let mut file = String::new();
+    std::io::stdin()
+        .read_to_string(&mut file)
+        .expect("Unable to read stdin.");
+
+    let config = Config {
+        tab_width: args.spaces,
+    };
+
+    let parse = HyprlangParser::parse(Rule::file, &file).unwrap();
 
     for pair in parse {
         match pair.as_rule() {

@@ -13,5 +13,6 @@ categories = [
 ]
 
 [dependencies]
+clap = { version = "4.5.41", features = ["derive"] }
 pest = "2.8.1"
 pest_derive = "2.8.1"
