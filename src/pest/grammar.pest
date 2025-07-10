@@ -1,0 +1,72 @@
+/// REF
+/// - https://pest.rs/book/grammars/built-ins.html#general-categories
+/// - https://www.unicode.org/versions/Unicode16.0.0/
+
+WHITESPACE      = _{ " " }
+newline = { NEWLINE }
+escaped_comment = _{ "##" }
+
+/// Skip '#' (\u23)
+/// Skip ';' (\u3B)
+/// Skip '[' (\u5B)
+/// Skip ']' (\u5D)
+/// Do not include DELETE (\u7F)
+most = _{
+    "!"
+  | "\""
+  | '\u{24}'..'\u{3A}'
+  | '\u{3C}'..'\u{5A}'
+  | "\\"
+  | '\u{5E}'..'\u{7E}'
+}
+
+safe_any = _{
+    most
+  | " "
+  | "#"
+  | ";"
+  | "["
+  | "]"
+}
+
+comment = @{ "#" ~ safe_any* }
+
+command_keyword        = { "exec-shutdown" | "exec-once" | "execr-once" }
+category_command_ident = {
+    ASCII_ALPHANUMERIC+ ~ ("[" ~ ASCII_ALPHANUMERIC+ ~ "]"){0, 1} ~ ":" ~ ASCII_ALPHANUMERIC+
+}
+
+variable_ident      = { "$" ~ ASCII_ALPHANUMERIC+ }
+variable_expression = { (variable_ident | most | escaped_comment)* }
+
+variable_assignment = { (variable_ident ~ "=" ~ variable_expression) ~ comment? }
+
+command_ident = { category_command_ident | (ASCII_ALPHANUMERIC | "_" | "." | "-")+ }
+
+arithmetic_expression_member = { ASCII_DIGIT+ | variable_ident }
+arithmetic_expression_infix  = { "+" | "-" | "/" | "*" }
+arithmetic_expression        = { !("\\" ~ "{{") ~ "{{" ~ arithmetic_expression_member ~ arithmetic_expression_infix ~ arithmetic_expression_member ~ "}}" }
+
+command_expression = { arithmetic_expression+ | (most | escaped_comment)+ }
+
+command_rule_start     = _{ "[" }
+command_rule_delimiter = _{ ";" ~ " "? }
+command_rule_single    = _{ command_expression ~ command_rule_delimiter? }
+command_rule_end       = _{ "]" }
+command_rule           =  { command_rule_start ~ command_rule_single+ ~ command_rule_end }
+
+command_rhs = _{ (command_rule | command_expression)* }
+
+command = { (command_ident ~ "=" ~ command_rhs) ~ comment? }
+
+category_ident = { ASCII_ALPHANUMERIC+ }
+
+category_start = _{ "{" }
+category_inner =  { (category | comment | command | newline)* }
+category_end   = _{ "}" }
+
+category = { (category_ident ~ category_start ~ category_inner ~ category_end) ~ comment? }
+
+file = {
+    SOI ~ ((comment | command | variable_assignment | category)? ~ newline)* ~ EOI
+}
