@@ -10,6 +10,7 @@ use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
 use std::fmt;
+use std::fmt::Write as _;
 use std::fs::read_to_string;
 
 #[derive(Parser)]
@@ -18,6 +19,16 @@ pub struct HyprlangParser;
 
 fn text(tag: &Pair<Rule>) -> String {
     tag.as_span().as_str().trim_end_matches(' ').to_string()
+}
+
+#[derive(PartialEq)]
+struct BlockState {
+    // The indentation level of the block
+    level: u8,
+    // The longest identifier in the block's length
+    lhs_max_length: usize,
+    // The longest statement in the block's length
+    max_length: usize,
 }
 
 // Blocks are lines of code localized by either:
@@ -41,26 +52,45 @@ fn text(tag: &Pair<Rule>) -> String {
 // another_ident = much_longer_bar # trailing 2
 #[derive(PartialEq)]
 struct Block {
-    // The indentation level of the block
-    level: u8,
-    // The longest identifier in the block's length
-    lhs_max_length: u8,
-    // The longest statement in the block's length
-    max_length: u8,
+    state: BlockState,
 
     nodes: Vec<Node>,
 
     config: Config,
 }
 
+trait Measure {
+    fn as_lhs(&self) -> Option<String>;
+    fn as_rhs(&self) -> Option<String>;
+}
+
 impl Block {
     fn new(nodes: Vec<Node>, level: u8, config: Config) -> Block {
+        let indent = config.tab_width * level;
+
+        let lhs_max_length = nodes
+            .iter()
+            .filter_map(|node| node.as_lhs().as_deref().map(str::len))
+            .max()
+            .unwrap_or(0);
+
+        let max_length = nodes
+            .iter()
+            .filter_map(|node| node.as_rhs().as_deref().map(str::len))
+            .max()
+            .unwrap_or(0)
+            + usize::from(indent)
+            + lhs_max_length
+            + 3;
+
         Block {
-            level,
-            config,
-            lhs_max_length: 0,
-            max_length: 0,
+            state: BlockState {
+                level,
+                lhs_max_length,
+                max_length,
+            },
             nodes,
+            config,
         }
     }
 }
@@ -68,15 +98,17 @@ impl Block {
 impl fmt::Display for Block {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         for node in &self.nodes {
-            if node == &Node::Newline {
-                write!(formatter, "{}", &node)?;
-            } else {
-                formatter.write_str(&" ".repeat((self.config.tab_width * self.level).into()))?;
-                write!(formatter, "{}", &node)?;
+            let s = node.format(self.config, &self.state)?;
+
+            if node != &Node::Newline {
+                let leading_spaces = usize::from(self.config.tab_width * self.state.level);
+                write!(formatter, "{empty:>leading_spaces$}", empty = "")?;
             }
+
+            formatter.write_str(&s)?;
         }
 
-        formatter.write_str("")
+        Ok(())
     }
 }
 
@@ -103,55 +135,47 @@ enum Node {
     EndOfInput,
 }
 
-impl fmt::Display for Node {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self == &Node::EndOfInput {
-            return formatter.write_str("");
-        }
+impl Measure for Node {
+    fn as_lhs(&self) -> Option<String> {
         match self {
-            Node::Comment { tokens } => formatter.write_str(tokens),
+            Node::Newline
+            | Node::EndOfInput
+            | Node::Comment { tokens: _ }
+            | Node::Category { block: _, ident: _ } => None,
             Node::Command {
-                comment,
                 ident,
+                comment: _,
+                parts: _,
+            }
+            | Node::VariableAssignment {
+                ident,
+                expression: _,
+                comment: _,
+            } => Some(ident.to_string()),
+        }
+    }
+    fn as_rhs(&self) -> Option<String> {
+        match self {
+            Node::Newline
+            | Node::EndOfInput
+            | Node::Comment { tokens: _ }
+            | Node::Category { block: _, ident: _ } => None,
+            Node::Command {
+                ident: _,
+                comment: _,
                 parts,
-            } => {
-                write!(formatter, "{} =", &ident)?;
-                let full_expression = parts
+            } => Some(
+                parts
                     .iter()
                     .map(std::string::ToString::to_string)
                     .collect::<Vec<_>>()
-                    .join(" ");
-
-                if !full_expression.is_empty() {
-                    formatter.write_str(&(" ".to_string() + &full_expression))?;
-                }
-
-                if let Some(c) = &comment {
-                    write!(formatter, " {}", &c)?;
-                }
-                formatter.write_str("")
-            }
+                    .join(" "),
+            ),
             Node::VariableAssignment {
-                comment,
-                ident,
+                ident: _,
                 expression,
-            } => {
-                write!(formatter, "{} = {}", &ident, &expression)?;
-                if let Some(c) = &comment {
-                    write!(formatter, " {}", &c)?;
-                }
-
-                formatter.write_str("")
-            }
-            Node::Category { ident, block } => {
-                write!(formatter, "{ident} {{")?;
-                formatter.write_str(&block.to_string())?;
-                formatter
-                    .write_str(&" ".repeat((block.config.tab_width * (block.level - 1)).into()))?;
-                formatter.write_str("}")
-            }
-            Node::Newline => formatter.write_str("\n"),
-            Node::EndOfInput => unreachable!(),
+                comment: _,
+            } => Some(expression.to_string()),
         }
     }
 }
@@ -272,6 +296,68 @@ impl Node {
             block: Block::new(nodes, level + 1, config),
         }
     }
+
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+        if self == &Node::EndOfInput {
+            return Ok(String::new());
+        }
+
+        match self {
+            Node::Comment { tokens } => Ok(tokens.to_string()),
+            Node::Command {
+                comment,
+                ident: _,
+                parts: _,
+            } => {
+                let lhs_pad_right = state.lhs_max_length;
+                let lhs = self.as_lhs().expect("infallible");
+
+                let mut s = String::new();
+                write!(s, "{lhs:lhs_pad_right$} =")?;
+                let rhs = self.as_rhs().expect("infallible");
+
+                if !rhs.is_empty() {
+                    write!(s, " {rhs}")?;
+                }
+
+                if let Some(c) = &comment {
+                    let comment_gap = state.max_length - s.as_str().len();
+                    write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
+                }
+                Ok(s)
+            }
+            Node::VariableAssignment {
+                comment,
+                ident: _,
+                expression: _,
+            } => {
+                let lhs_pad_right = state.lhs_max_length;
+                let lhs = self.as_lhs().expect("infallible");
+                let rhs = self.as_rhs().expect("infallible");
+
+                let mut s = String::new();
+                write!(s, "{lhs:lhs_pad_right$} = {rhs}")?;
+
+                if let Some(c) = &comment {
+                    let comment_gap = state.max_length - s.as_str().len();
+                    write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
+                }
+
+                Ok(s)
+            }
+            Node::Category { ident, block } => {
+                let mut s = String::new();
+                write!(s, "{ident} {{")?;
+                write!(s, "{}", &block.to_string())?;
+                let leading_spaces = usize::from(config.tab_width * state.level);
+                write!(s, "{empty:>leading_spaces$}", empty = "")?;
+                write!(s, "}}")?;
+                Ok(s)
+            }
+            Node::Newline => Ok("\n".to_string()),
+            Node::EndOfInput => unreachable!(),
+        }
+    }
 }
 
 fn get_file_blocks(pair: Pair<Rule>, config: Config) -> Vec<Block> {
@@ -333,7 +419,7 @@ struct Config {
 
 fn main() {
     let hypr_conf = read_to_string("testbed/hypr/hyprland.conf").unwrap();
-    let config = Config { tab_width: 2 };
+    let config = Config { tab_width: 4 };
 
     let parse = HyprlangParser::parse(Rule::file, &hypr_conf).unwrap();
 
