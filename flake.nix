@@ -22,8 +22,12 @@
       overlays = [rust-overlay.overlays.default];
     };
 
+    package = import ./package.nix projectInputs;
+
     projectInputs = {
+      inherit package;
       inherit pkgs;
+
       projectNamespace = {
         rust = pkgs.rust-bin.selectLatestNightlyWith (toolchain:
           toolchain.minimal.override {
@@ -43,6 +47,8 @@
             ];
           });
         scripts = {
+          build-and-test = import ./scripts/bin/build-and-test/main.nix projectInputs;
+          check = import ./scripts/bin/check/main.nix projectInputs;
           fix = import ./scripts/bin/fix/main.nix projectInputs;
 
           format = {
@@ -59,17 +65,19 @@
           };
 
           local-ci = import ./scripts/bin/local-ci/main.nix projectInputs;
+
+          test = {
+            test-e2e = import ./testbed/scripts/bin/test-e2e/main.nix projectInputs;
+          };
         };
       };
     };
 
     formatter = pkgs.alejandra;
     shell = import ./shell.nix projectInputs;
-    package = import ./package.nix projectInputs;
   in {
     inherit shell;
-    inherit (pkgs.rustPlatform) buildRustPackage;
-    inherit (projectInputs.projectNamespace) rust;
+    inherit (projectInputs.projectNamespace) scripts;
 
     packages."${system}".default = package;
     formatter."${system}" = formatter;
