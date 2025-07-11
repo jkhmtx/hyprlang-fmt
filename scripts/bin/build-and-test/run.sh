@@ -1,4 +1,3 @@
 # shellcheck shell=bash
 
-check
-build-and-test
+test-e2e
