@@ -19,7 +19,7 @@ The `.envrc` is the script that is executed when running `direnv allow`. To modi
 
 ## Filing Issues
 
-Please be nice. This is a hobby project.
+Please be nice! This is a hobby project.
 
 Pull requests are welcome, but only considered for merge after an issue is raised.
 
