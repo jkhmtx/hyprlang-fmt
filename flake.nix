@@ -22,16 +22,19 @@
       overlays = [rust-overlay.overlays.default];
     };
 
+    package = import ./package.nix projectInputs;
+
     projectInputs = {
+      inherit package;
       inherit pkgs;
       projectNamespace = import ./project.nix projectInputs;
     };
 
     formatter = pkgs.alejandra;
     shell = import ./shell.nix projectInputs;
-    package = import ./package.nix projectInputs;
   in {
     inherit shell;
+    inherit (projectInputs.projectNamespace) scripts;
 
     packages."${system}".default = package;
     formatter."${system}" = formatter;

@@ -17,6 +17,8 @@ projectInputs: {
       ];
     });
   scripts = {
+    build-and-test = import ./scripts/bin/build-and-test/main.nix projectInputs;
+    check = import ./scripts/bin/check/main.nix projectInputs;
     fix = import ./scripts/bin/fix/main.nix projectInputs;
 
     format = {
@@ -33,5 +35,9 @@ projectInputs: {
     };
 
     local-ci = import ./scripts/bin/local-ci/main.nix projectInputs;
+
+    test = {
+      test-e2e = import ./testbed/scripts/bin/test-e2e/main.nix projectInputs;
+    };
   };
 }

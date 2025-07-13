@@ -6,7 +6,10 @@
 pkgs.writeShellApplication {
   name = "local-ci";
 
-  runtimeInputs = builtins.attrValues projectNamespace.scripts.format ++ builtins.attrValues projectNamespace.scripts.lint;
+  runtimeInputs = [
+    projectNamespace.scripts.build-and-test
+    projectNamespace.scripts.check
+  ];
 
   text = builtins.readFile ./run.sh;
 }
