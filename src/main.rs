@@ -127,6 +127,12 @@ impl Format for CommentNode {
         Ok(self.tokens.to_string())
     }
 }
+
+impl CommentNode {
+    fn new(tag: &Pair<Rule>) -> Self {
+        CommentNode { tokens: text(tag) }
+    }
+}
 #[derive(PartialEq)]
 struct CommandNode {
     comment: Option<String>,
@@ -150,6 +156,33 @@ impl Format for CommandNode {
             write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
         }
         Ok(s)
+    }
+}
+
+impl CommandNode {
+    fn new(tag: &Pair<Rule>) -> Self {
+        let mut ident = None;
+        let mut parts = Vec::new();
+        let mut comment = None;
+
+        for part in tag.clone().into_inner() {
+            match part.as_rule() {
+                Rule::command_ident => {
+                    ident = Some(text(&part));
+                }
+                Rule::command_expression | Rule::command_rule => parts.push(text(&part)),
+                Rule::comment => {
+                    comment = Some(text(&part));
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        CommandNode {
+            comment,
+            ident: ident.expect("command must have an ident"),
+            parts,
+        }
     }
 }
 #[derive(PartialEq)]
@@ -178,6 +211,34 @@ impl Format for VariableAssignmentNode {
         Ok(s)
     }
 }
+
+impl VariableAssignmentNode {
+    fn new(tag: &Pair<Rule>) -> Self {
+        let mut ident = None;
+        let mut expression = None;
+        let mut comment = None;
+
+        for part in tag.clone().into_inner() {
+            match part.as_rule() {
+                Rule::variable_ident => {
+                    ident = Some(text(&part));
+                }
+                Rule::variable_expression => {
+                    expression = Some(text(&part));
+                }
+                Rule::comment => {
+                    comment = Some(text(&part));
+                }
+                _ => unreachable!(),
+            }
+        }
+        VariableAssignmentNode {
+            comment,
+            expression: expression.expect("variable_assignment must have an expression"),
+            ident: ident.expect("variable_assignment must have an ident"),
+        }
+    }
+}
 #[derive(PartialEq)]
 struct CategoryNode {
     ident: String,
@@ -194,6 +255,57 @@ impl Format for CategoryNode {
         write!(s, "{empty:>leading_spaces$}", empty = "")?;
         write!(s, "}}")?;
         Ok(s)
+    }
+}
+
+impl CategoryNode {
+    fn new(tag: &Pair<Rule>, level: u8, config: Config) -> Self {
+        let mut ident = None;
+        let mut nodes = Vec::new();
+
+        for pair in tag.clone().into_inner() {
+            match pair.as_rule() {
+                Rule::category_ident => {
+                    ident = Some(text(&pair));
+                }
+                Rule::category_inner => {
+                    for inner_pair in pair.into_inner() {
+                        match inner_pair.as_rule() {
+                            Rule::command => {
+                                nodes.push(Node::Command(CommandNode::new(&inner_pair)));
+                            }
+                            Rule::comment => {
+                                nodes.push(Node::Comment(CommentNode::new(&inner_pair)));
+                            }
+                            Rule::newline => {
+                                let mut nodes_iter = nodes.iter().rev();
+                                match (nodes_iter.next(), nodes_iter.next()) {
+                                    // Don't add newlines if the previous two nodes were also newlines
+                                    (Some(last), Some(near_last))
+                                        if *last == Node::Newline
+                                            && *near_last == Node::Newline => {}
+                                    _ => nodes.push(Node::Newline),
+                                }
+                            }
+                            Rule::category => {
+                                nodes.push(Node::Category(CategoryNode::new(
+                                    &inner_pair,
+                                    level + 1,
+                                    config,
+                                )));
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        CategoryNode {
+            ident: ident.expect("category must have an ident"),
+            block: Block::new(nodes, level + 1, config),
+        }
     }
 }
 
@@ -290,11 +402,11 @@ impl Format for Node {
 impl Node {
     fn new(tag: &Pair<Rule>, config: Config) -> Node {
         match tag.as_rule() {
-            Rule::comment => Node::new_comment(tag),
+            Rule::comment => Node::Comment(CommentNode::new(tag)),
             Rule::newline => Node::Newline,
-            Rule::command => Node::new_command(tag),
-            Rule::variable_assignment => Node::new_variable_assignment(tag),
-            Rule::category => Node::new_category(tag, 0, config),
+            Rule::command => Node::Command(CommandNode::new(tag)),
+            Rule::variable_assignment => Node::VariableAssignment(VariableAssignmentNode::new(tag)),
+            Rule::category => Node::Category(CategoryNode::new(tag, 0, config)),
             Rule::EOI => Node::EndOfInput,
             _ => unreachable!(),
         }
@@ -306,102 +418,6 @@ impl Node {
             Some(tag) => Some(Node::new(tag, config)),
             _ => None,
         }
-    }
-
-    fn new_comment(tag: &Pair<Rule>) -> Node {
-        Node::Comment(CommentNode { tokens: text(tag) })
-    }
-
-    fn new_command(tag: &Pair<Rule>) -> Node {
-        let mut ident = None;
-        let mut parts = Vec::new();
-        let mut comment = None;
-
-        for part in tag.clone().into_inner() {
-            match part.as_rule() {
-                Rule::command_ident => {
-                    ident = Some(text(&part));
-                }
-                Rule::command_expression | Rule::command_rule => parts.push(text(&part)),
-                Rule::comment => {
-                    comment = Some(text(&part));
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        Node::Command(CommandNode {
-            comment,
-            ident: ident.expect("command must have an ident"),
-            parts,
-        })
-    }
-
-    fn new_variable_assignment(tag: &Pair<Rule>) -> Node {
-        let mut ident = None;
-        let mut expression = None;
-        let mut comment = None;
-
-        for part in tag.clone().into_inner() {
-            match part.as_rule() {
-                Rule::variable_ident => {
-                    ident = Some(text(&part));
-                }
-                Rule::variable_expression => {
-                    expression = Some(text(&part));
-                }
-                Rule::comment => {
-                    comment = Some(text(&part));
-                }
-                _ => unreachable!(),
-            }
-        }
-        Node::VariableAssignment(VariableAssignmentNode {
-            comment,
-            expression: expression.expect("variable_assignment must have an expression"),
-            ident: ident.expect("variable_assignment must have an ident"),
-        })
-    }
-
-    fn new_category(tag: &Pair<Rule>, level: u8, config: Config) -> Node {
-        let mut ident = None;
-        let mut nodes = Vec::new();
-
-        for pair in tag.clone().into_inner() {
-            match pair.as_rule() {
-                Rule::category_ident => {
-                    ident = Some(text(&pair));
-                }
-                Rule::category_inner => {
-                    for inner_pair in pair.into_inner() {
-                        match inner_pair.as_rule() {
-                            Rule::command => nodes.push(Node::new_command(&inner_pair)),
-                            Rule::comment => nodes.push(Node::new_comment(&inner_pair)),
-                            Rule::newline => {
-                                let mut nodes_iter = nodes.iter().rev();
-                                match (nodes_iter.next(), nodes_iter.next()) {
-                                    // Don't add newlines if the previous two nodes were also newlines
-                                    (Some(last), Some(near_last))
-                                        if *last == Node::Newline
-                                            && *near_last == Node::Newline => {}
-                                    _ => nodes.push(Node::Newline),
-                                }
-                            }
-                            Rule::category => {
-                                nodes.push(Node::new_category(&inner_pair, level + 1, config));
-                            }
-                            _ => unreachable!(),
-                        }
-                    }
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        Node::Category(CategoryNode {
-            ident: ident.expect("category must have an ident"),
-            block: Block::new(nodes, level + 1, config),
-        })
     }
 }
 
@@ -469,6 +485,10 @@ struct Args {
     /// How many spaces to use for indentation
     #[arg(short, long, default_value_t = 2)]
     spaces: u8,
+}
+
+struct File {
+    blocks: Vec<Block>,
 }
 
 fn main() {
