@@ -9,23 +9,16 @@
 mod state;
 mod cli;
 mod format;
+mod grammar;
 
+use crate::format::{Format, text};
+use crate::state::{Config, BlockState};
+use crate::grammar::{HyprlangParser, Rule};
 use pest::iterators::Pair;
-use format::Format;
 use pest::Parser;
-use pest_derive::Parser;
-use state::{Config, BlockState};
 use std::fmt;
 use std::fmt::Write as _;
 use std::io::Read;
-
-#[derive(Parser)]
-#[grammar = "pest/grammar.pest"]
-pub struct HyprlangParser;
-
-fn text(tag: &Pair<Rule>) -> String {
-    tag.as_span().as_str().trim_end_matches(' ').to_string()
-}
 
 // Blocks are lines of code localized by either:
 //   1. Contiguous spacing
