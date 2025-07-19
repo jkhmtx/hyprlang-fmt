@@ -63,6 +63,7 @@ struct Block {
 trait Measure {
     fn as_lhs(&self) -> Option<String>;
     fn as_rhs(&self) -> Option<String>;
+    fn as_mid(&self) -> Option<String>;
 }
 
 trait Format {
@@ -136,15 +137,13 @@ struct CommandNode {
 impl Format for CommandNode {
     fn format(&self, _config: Config, state: &BlockState) -> Result<String, fmt::Error> {
         let lhs_pad_right = state.lhs_max_length;
-        let lhs = self.as_lhs().expect("infallible");
 
-        let mut s = String::new();
-        write!(s, "{lhs:lhs_pad_right$} =")?;
+        let lhs = self.as_lhs().expect("infallible");
+        let mid = self.as_mid().expect("infallible");
         let rhs = self.as_rhs().expect("infallible");
 
-        if !rhs.is_empty() {
-            write!(s, " {rhs}")?;
-        }
+        let mut s = String::new();
+        write!(s, "{lhs:lhs_pad_right$}{mid}{rhs}")?;
 
         if let Some(c) = &self.comment {
             let comment_gap = state.max_length - s.as_str().len();
@@ -163,11 +162,13 @@ struct VariableAssignmentNode {
 impl Format for VariableAssignmentNode {
     fn format(&self, _config: Config, state: &BlockState) -> Result<String, fmt::Error> {
         let lhs_pad_right = state.lhs_max_length;
+
         let lhs = self.as_lhs().expect("infallible");
+        let mid = self.as_mid().expect("infallible");
         let rhs = self.as_rhs().expect("infallible");
 
         let mut s = String::new();
-        write!(s, "{lhs:lhs_pad_right$} = {rhs}")?;
+        write!(s, "{lhs:lhs_pad_right$}{mid}{rhs}")?;
 
         if let Some(c) = &self.comment {
             let comment_gap = state.max_length - s.as_str().len();
@@ -221,6 +222,14 @@ impl Measure for Node {
             Node::VariableAssignment(n) => n.as_rhs(),
         }
     }
+
+    fn as_mid(&self) -> Option<String> {
+        match self {
+            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Command(n) => n.as_mid(),
+            Node::VariableAssignment(n) => n.as_mid(),
+        }
+    }
 }
 
 impl Measure for VariableAssignmentNode {
@@ -229,6 +238,15 @@ impl Measure for VariableAssignmentNode {
     }
     fn as_rhs(&self) -> Option<String> {
         Some(self.expression.to_string())
+    }
+    fn as_mid(&self) -> Option<String> {
+        let has_lhs = self.as_lhs().map(|side| !side.is_empty());
+        let has_rhs = self.as_rhs().map(|side| !side.is_empty());
+        match (has_lhs, has_rhs) {
+            (Some(l), Some(r)) if l && r => Some(String::from(" = ")),
+            (Some(l), Some(r)) if l && !r => Some(String::from(" =")),
+            _ => None,
+        }
     }
 }
 
@@ -244,6 +262,15 @@ impl Measure for CommandNode {
                 .collect::<Vec<_>>()
                 .join(" "),
         )
+    }
+    fn as_mid(&self) -> Option<String> {
+        let has_lhs = self.as_lhs().map(|side| !side.is_empty());
+        let has_rhs = self.as_rhs().map(|side| !side.is_empty());
+        match (has_lhs, has_rhs) {
+            (Some(l), Some(r)) if l && r => Some(String::from(" = ")),
+            (Some(l), Some(r)) if l && !r => Some(String::from(" =")),
+            _ => None,
+        }
     }
 }
 
