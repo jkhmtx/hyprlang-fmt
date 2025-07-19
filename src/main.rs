@@ -65,6 +65,10 @@ trait Measure {
     fn as_rhs(&self) -> Option<String>;
 }
 
+trait Format {
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error>;
+}
+
 impl Block {
     fn new(nodes: Vec<Node>, level: u8, config: Config) -> Block {
         let indent = config.tab_width * level;
@@ -114,24 +118,90 @@ impl fmt::Display for Block {
 }
 
 #[derive(PartialEq)]
+struct CommentNode {
+    tokens: String,
+}
+impl Format for CommentNode {
+    fn format(&self, _config: Config, _state: &BlockState) -> Result<String, fmt::Error> {
+        Ok(self.tokens.to_string())
+    }
+}
+#[derive(PartialEq)]
+struct CommandNode {
+    comment: Option<String>,
+    ident: String,
+    parts: Vec<String>,
+}
+
+impl Format for CommandNode {
+    fn format(&self, _config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+        let lhs_pad_right = state.lhs_max_length;
+        let lhs = self.as_lhs().expect("infallible");
+
+        let mut s = String::new();
+        write!(s, "{lhs:lhs_pad_right$} =")?;
+        let rhs = self.as_rhs().expect("infallible");
+
+        if !rhs.is_empty() {
+            write!(s, " {rhs}")?;
+        }
+
+        if let Some(c) = &self.comment {
+            let comment_gap = state.max_length - s.as_str().len();
+            write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
+        }
+        Ok(s)
+    }
+}
+#[derive(PartialEq)]
+struct VariableAssignmentNode {
+    comment: Option<String>,
+    expression: String,
+    ident: String,
+}
+
+impl Format for VariableAssignmentNode {
+    fn format(&self, _config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+        let lhs_pad_right = state.lhs_max_length;
+        let lhs = self.as_lhs().expect("infallible");
+        let rhs = self.as_rhs().expect("infallible");
+
+        let mut s = String::new();
+        write!(s, "{lhs:lhs_pad_right$} = {rhs}")?;
+
+        if let Some(c) = &self.comment {
+            let comment_gap = state.max_length - s.as_str().len();
+            write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
+        }
+
+        Ok(s)
+    }
+}
+#[derive(PartialEq)]
+struct CategoryNode {
+    ident: String,
+    block: Block,
+}
+
+impl Format for CategoryNode {
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+        let CategoryNode { ident, block } = self;
+        let mut s = String::new();
+        write!(s, "{ident} {{")?;
+        write!(s, "{}", &block.to_string())?;
+        let leading_spaces = usize::from(config.tab_width * state.level);
+        write!(s, "{empty:>leading_spaces$}", empty = "")?;
+        write!(s, "}}")?;
+        Ok(s)
+    }
+}
+
+#[derive(PartialEq)]
 enum Node {
-    Comment {
-        tokens: String,
-    },
-    Command {
-        comment: Option<String>,
-        ident: String,
-        parts: Vec<String>,
-    },
-    VariableAssignment {
-        comment: Option<String>,
-        expression: String,
-        ident: String,
-    },
-    Category {
-        ident: String,
-        block: Block,
-    },
+    Comment(CommentNode),
+    Command(CommandNode),
+    VariableAssignment(VariableAssignmentNode),
+    Category(CategoryNode),
     Newline,
     EndOfInput,
 }
@@ -139,44 +209,53 @@ enum Node {
 impl Measure for Node {
     fn as_lhs(&self) -> Option<String> {
         match self {
-            Node::Newline
-            | Node::EndOfInput
-            | Node::Comment { tokens: _ }
-            | Node::Category { block: _, ident: _ } => None,
-            Node::Command {
-                ident,
-                comment: _,
-                parts: _,
-            }
-            | Node::VariableAssignment {
-                ident,
-                expression: _,
-                comment: _,
-            } => Some(ident.to_string()),
+            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Command(n) => n.as_lhs(),
+            Node::VariableAssignment(n) => n.as_lhs(),
         }
     }
     fn as_rhs(&self) -> Option<String> {
         match self {
-            Node::Newline
-            | Node::EndOfInput
-            | Node::Comment { tokens: _ }
-            | Node::Category { block: _, ident: _ } => None,
-            Node::Command {
-                ident: _,
-                comment: _,
-                parts,
-            } => Some(
-                parts
-                    .iter()
-                    .map(std::string::ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(" "),
-            ),
-            Node::VariableAssignment {
-                ident: _,
-                expression,
-                comment: _,
-            } => Some(expression.to_string()),
+            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Command(n) => n.as_rhs(),
+            Node::VariableAssignment(n) => n.as_rhs(),
+        }
+    }
+}
+
+impl Measure for VariableAssignmentNode {
+    fn as_lhs(&self) -> Option<String> {
+        Some(self.ident.to_string())
+    }
+    fn as_rhs(&self) -> Option<String> {
+        Some(self.expression.to_string())
+    }
+}
+
+impl Measure for CommandNode {
+    fn as_lhs(&self) -> Option<String> {
+        Some(self.ident.to_string())
+    }
+    fn as_rhs(&self) -> Option<String> {
+        Some(
+            self.parts
+                .iter()
+                .map(std::string::ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(" "),
+        )
+    }
+}
+
+impl Format for Node {
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+        match self {
+            Node::EndOfInput => Ok(String::new()),
+            Node::Newline => Ok("\n".to_string()),
+            Node::Comment(n) => n.format(config, state),
+            Node::Command(n) => n.format(config, state),
+            Node::VariableAssignment(n) => n.format(config, state),
+            Node::Category(n) => n.format(config, state),
         }
     }
 }
@@ -203,7 +282,7 @@ impl Node {
     }
 
     fn new_comment(tag: &Pair<Rule>) -> Node {
-        Node::Comment { tokens: text(tag) }
+        Node::Comment(CommentNode { tokens: text(tag) })
     }
 
     fn new_command(tag: &Pair<Rule>) -> Node {
@@ -224,11 +303,11 @@ impl Node {
             }
         }
 
-        Node::Command {
+        Node::Command(CommandNode {
             comment,
             ident: ident.expect("command must have an ident"),
             parts,
-        }
+        })
     }
 
     fn new_variable_assignment(tag: &Pair<Rule>) -> Node {
@@ -250,11 +329,11 @@ impl Node {
                 _ => unreachable!(),
             }
         }
-        Node::VariableAssignment {
+        Node::VariableAssignment(VariableAssignmentNode {
             comment,
             expression: expression.expect("variable_assignment must have an expression"),
             ident: ident.expect("variable_assignment must have an ident"),
-        }
+        })
     }
 
     fn new_category(tag: &Pair<Rule>, level: u8, config: Config) -> Node {
@@ -292,72 +371,10 @@ impl Node {
             }
         }
 
-        Node::Category {
+        Node::Category(CategoryNode {
             ident: ident.expect("category must have an ident"),
             block: Block::new(nodes, level + 1, config),
-        }
-    }
-
-    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
-        if self == &Node::EndOfInput {
-            return Ok(String::new());
-        }
-
-        match self {
-            Node::Comment { tokens } => Ok(tokens.to_string()),
-            Node::Command {
-                comment,
-                ident: _,
-                parts: _,
-            } => {
-                let lhs_pad_right = state.lhs_max_length;
-                let lhs = self.as_lhs().expect("infallible");
-
-                let mut s = String::new();
-                write!(s, "{lhs:lhs_pad_right$} =")?;
-                let rhs = self.as_rhs().expect("infallible");
-
-                if !rhs.is_empty() {
-                    write!(s, " {rhs}")?;
-                }
-
-                if let Some(c) = &comment {
-                    let comment_gap = state.max_length - s.as_str().len();
-                    write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
-                }
-                Ok(s)
-            }
-            Node::VariableAssignment {
-                comment,
-                ident: _,
-                expression: _,
-            } => {
-                let lhs_pad_right = state.lhs_max_length;
-                let lhs = self.as_lhs().expect("infallible");
-                let rhs = self.as_rhs().expect("infallible");
-
-                let mut s = String::new();
-                write!(s, "{lhs:lhs_pad_right$} = {rhs}")?;
-
-                if let Some(c) = &comment {
-                    let comment_gap = state.max_length - s.as_str().len();
-                    write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
-                }
-
-                Ok(s)
-            }
-            Node::Category { ident, block } => {
-                let mut s = String::new();
-                write!(s, "{ident} {{")?;
-                write!(s, "{}", &block.to_string())?;
-                let leading_spaces = usize::from(config.tab_width * state.level);
-                write!(s, "{empty:>leading_spaces$}", empty = "")?;
-                write!(s, "}}")?;
-                Ok(s)
-            }
-            Node::Newline => Ok("\n".to_string()),
-            Node::EndOfInput => unreachable!(),
-        }
+        })
     }
 }
 
