@@ -7,12 +7,12 @@
 #![warn(clippy::suspicious)]
 
 mod state;
+mod cli;
 
-use clap::Parser as ClapParser;
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
-use state::block::BlockState;
+use state::{config::Config, block::BlockState};
 use std::fmt;
 use std::fmt::Write as _;
 use std::io::Read;
@@ -465,35 +465,17 @@ fn get_file_blocks(pair: Pair<Rule>, config: Config) -> Vec<Block> {
     blocks
 }
 
-#[derive(PartialEq, Clone, Copy)]
-struct Config {
-    pub tab_width: u8,
-}
-
-/// A formatter for the hyprlang language.
-#[derive(ClapParser, Debug)]
-#[command(version)]
-struct Args {
-    /// How many spaces to use for indentation
-    #[arg(short, long, default_value_t = 2)]
-    spaces: u8,
-}
-
 struct File {
     blocks: Vec<Block>,
 }
 
 fn main() {
-    let args = Args::parse();
-
+    let config = cli::get_config();
     let mut file = String::new();
     std::io::stdin()
         .read_to_string(&mut file)
         .expect("Unable to read stdin.");
 
-    let config = Config {
-        tab_width: args.spaces,
-    };
 
     let parse = HyprlangParser::parse(Rule::file, &file).unwrap();
 
