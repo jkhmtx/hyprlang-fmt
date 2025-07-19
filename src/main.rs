@@ -6,10 +6,13 @@
 #![warn(clippy::style)]
 #![warn(clippy::suspicious)]
 
+mod state;
+
 use clap::Parser as ClapParser;
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
+use state::block::BlockState;
 use std::fmt;
 use std::fmt::Write as _;
 use std::io::Read;
@@ -20,16 +23,6 @@ pub struct HyprlangParser;
 
 fn text(tag: &Pair<Rule>) -> String {
     tag.as_span().as_str().trim_end_matches(' ').to_string()
-}
-
-#[derive(PartialEq)]
-struct BlockState {
-    // The indentation level of the block
-    level: u8,
-    // The longest identifier in the block's length
-    lhs_max_length: usize,
-    // The longest statement in the block's length
-    max_length: usize,
 }
 
 // Blocks are lines of code localized by either:
