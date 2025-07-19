@@ -8,6 +8,3 @@ pub struct Args {
     #[arg(short, long, default_value_t = 2)]
     pub spaces: u8,
 }
-
-
-

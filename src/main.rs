@@ -8,11 +8,13 @@
 
 mod state;
 mod cli;
+mod format;
 
 use pest::iterators::Pair;
+use format::Format;
 use pest::Parser;
 use pest_derive::Parser;
-use state::{config::Config, block::BlockState};
+use state::{Config, BlockState};
 use std::fmt;
 use std::fmt::Write as _;
 use std::io::Read;
@@ -57,10 +59,6 @@ trait Measure {
     fn as_lhs(&self) -> Option<String>;
     fn as_rhs(&self) -> Option<String>;
     fn as_mid(&self) -> Option<String>;
-}
-
-trait Format {
-    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error>;
 }
 
 impl Block {

@@ -7,3 +7,8 @@ pub struct BlockState {
     // The longest statement in the block's length
     pub max_length: usize,
 }
+
+#[derive(PartialEq, Clone, Copy)]
+pub struct Config {
+    pub tab_width: u8,
+}

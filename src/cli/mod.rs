@@ -1,7 +1,7 @@
 mod args;
 
 use clap::Parser;
-use crate::state::config::Config;
+use crate::state::Config;
 use args::Args;
 
 pub fn get_config() -> Config {
