@@ -8,6 +8,7 @@
     [
       projectNamespace.scripts.build-and-test
       projectNamespace.scripts.check
+      projectNamespace.scripts.debug
       projectNamespace.scripts.fix
       projectNamespace.scripts.local-ci
     ]

@@ -17,6 +17,7 @@ projectInputs: {
   scripts = {
     build-and-test = import ./scripts/bin/build-and-test/main.nix projectInputs;
     check = import ./scripts/bin/check/main.nix projectInputs;
+    debug = import ./scripts/bin/debug/main.nix projectInputs;
     fix = import ./scripts/bin/fix/main.nix projectInputs;
 
     format = {
