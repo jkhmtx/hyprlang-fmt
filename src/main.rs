@@ -10,7 +10,9 @@ mod state;
 mod cli;
 mod format;
 mod grammar;
+mod components;
 
+use crate::components::comment::CommentNode;
 use crate::format::{Format, text};
 use crate::state::{Config, BlockState};
 use crate::grammar::{HyprlangParser, Rule};
@@ -102,21 +104,6 @@ impl fmt::Display for Block {
     }
 }
 
-#[derive(PartialEq)]
-struct CommentNode {
-    tokens: String,
-}
-impl Format for CommentNode {
-    fn format(&self, _config: Config, _state: &BlockState) -> Result<String, fmt::Error> {
-        Ok(self.tokens.to_string())
-    }
-}
-
-impl CommentNode {
-    fn new(tag: &Pair<Rule>) -> Self {
-        CommentNode { tokens: text(tag) }
-    }
-}
 #[derive(PartialEq)]
 struct CommandNode {
     comment: Option<String>,
