@@ -1,6 +1,6 @@
+use crate::format::{Format, Measure};
 use crate::node::Node;
-use crate::state::{Config, BlockState};
-use crate::format::{Measure, Format};
+use crate::state::{BlockState, Config};
 use std::fmt;
 
 // Blocks are lines of code localized by either:
@@ -78,5 +78,3 @@ impl fmt::Display for Block {
         Ok(())
     }
 }
-
-

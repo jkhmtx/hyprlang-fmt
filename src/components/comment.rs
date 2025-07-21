@@ -1,9 +1,9 @@
-use crate::state::{Config, BlockState};
-use std::fmt;
 use crate::format::text;
-use crate::grammar::Rule;
-use pest::iterators::Pair;
 use crate::format::Format;
+use crate::grammar::Rule;
+use crate::state::{BlockState, Config};
+use pest::iterators::Pair;
+use std::fmt;
 
 #[derive(PartialEq)]
 pub struct CommentNode {

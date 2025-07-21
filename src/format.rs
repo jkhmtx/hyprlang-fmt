@@ -1,6 +1,6 @@
-use pest::iterators::Pair;
-use crate::state::{Config, BlockState};
 use crate::grammar::Rule;
+use crate::state::{BlockState, Config};
+use pest::iterators::Pair;
 use std::fmt;
 
 pub trait Format {
@@ -13,8 +13,6 @@ pub trait Measure {
     fn as_mid(&self) -> Option<String>;
 }
 
-
 pub fn text(tag: &Pair<Rule>) -> String {
     tag.as_span().as_str().trim_end_matches(' ').to_string()
 }
-

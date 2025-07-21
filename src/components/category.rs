@@ -1,12 +1,12 @@
-use crate::state::{Config, BlockState};
-use std::fmt;
-use crate::format::{text, Format};
 use crate::components::block::Block;
-use crate::node::Node;
-use crate::components::comment::CommentNode;
 use crate::components::command::CommandNode;
+use crate::components::comment::CommentNode;
+use crate::format::{text, Format};
 use crate::grammar::Rule;
+use crate::node::Node;
+use crate::state::{BlockState, Config};
 use pest::iterators::Pair;
+use std::fmt;
 use std::fmt::Write as _;
 
 #[derive(PartialEq)]
@@ -78,4 +78,3 @@ impl CategoryNode {
         }
     }
 }
-

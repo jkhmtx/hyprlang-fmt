@@ -6,12 +6,12 @@
 #![warn(clippy::style)]
 #![warn(clippy::suspicious)]
 
-mod state;
 mod cli;
+mod components;
 mod format;
 mod grammar;
-mod components;
 mod node;
+mod state;
 
 fn main() {
     let config = cli::get_config();

@@ -12,7 +12,7 @@ fi
 
 git ls-files --exclude-standard --others -z '*.rs' && git ls-files --exclude-standard -z '*.rs' >files.lst
 
-mapfile -t files <files.lst
+mapfile -d '' -t files <files.lst
 
 rm files.lst
 

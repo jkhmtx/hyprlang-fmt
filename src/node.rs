@@ -1,12 +1,12 @@
-use crate::grammar::{Rule};
-use pest::iterators::Pair;
-use crate::format::{Measure, Format};
-use std::fmt;
-use crate::state::{Config, BlockState};
-use crate::components::comment::CommentNode;
-use crate::components::command::CommandNode;
-use crate::components::variable_assignment::VariableAssignmentNode;
 use crate::components::category::CategoryNode;
+use crate::components::command::CommandNode;
+use crate::components::comment::CommentNode;
+use crate::components::variable_assignment::VariableAssignmentNode;
+use crate::format::{Format, Measure};
+use crate::grammar::Rule;
+use crate::state::{BlockState, Config};
+use pest::iterators::Pair;
+use std::fmt;
 
 #[derive(PartialEq)]
 pub enum Node {
@@ -57,19 +57,20 @@ impl Format for Node {
 impl Node {
     pub fn maybe(tag: Option<&Pair<Rule>>, config: Config) -> Option<Node> {
         tag.and_then(|tag| {
-        if tag.as_rule() == Rule::EOI {
-            return None;
-        }
+            if tag.as_rule() == Rule::EOI {
+                return None;
+            }
 
-        Some(match tag.as_rule() {
-            Rule::comment => Node::Comment(CommentNode::new(tag)),
-            Rule::newline => Node::Newline,
-            Rule::command => Node::Command(CommandNode::new(tag)),
-            Rule::variable_assignment => Node::VariableAssignment(VariableAssignmentNode::new(tag)),
-            Rule::category => Node::Category(CategoryNode::new(tag, 0, config)),
-            _ => unreachable!(),
-        })
+            Some(match tag.as_rule() {
+                Rule::comment => Node::Comment(CommentNode::new(tag)),
+                Rule::newline => Node::Newline,
+                Rule::command => Node::Command(CommandNode::new(tag)),
+                Rule::variable_assignment => {
+                    Node::VariableAssignment(VariableAssignmentNode::new(tag))
+                }
+                Rule::category => Node::Category(CategoryNode::new(tag, 0, config)),
+                _ => unreachable!(),
+            })
         })
     }
 }
-

@@ -1,8 +1,8 @@
-use crate::state::{Config, BlockState};
-use std::fmt;
-use crate::format::{Measure, text, Format};
+use crate::format::{text, Format, Measure};
 use crate::grammar::Rule;
+use crate::state::{BlockState, Config};
 use pest::iterators::Pair;
+use std::fmt;
 use std::fmt::Write as _;
 
 #[derive(PartialEq)]
@@ -50,7 +50,6 @@ impl Measure for VariableAssignmentNode {
     }
 }
 
-
 impl VariableAssignmentNode {
     pub fn new(tag: &Pair<Rule>) -> Self {
         let mut ident = None;
@@ -78,4 +77,3 @@ impl VariableAssignmentNode {
         }
     }
 }
-
