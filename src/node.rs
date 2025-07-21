@@ -15,20 +15,19 @@ pub enum Node {
     VariableAssignment(VariableAssignmentNode),
     Category(CategoryNode),
     Newline,
-    EndOfInput,
 }
 
 impl Measure for Node {
     fn as_lhs(&self) -> Option<String> {
         match self {
-            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Newline | Node::Comment(_) | Node::Category(_) => None,
             Node::Command(n) => n.as_lhs(),
             Node::VariableAssignment(n) => n.as_lhs(),
         }
     }
     fn as_rhs(&self) -> Option<String> {
         match self {
-            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Newline | Node::Comment(_) | Node::Category(_) => None,
             Node::Command(n) => n.as_rhs(),
             Node::VariableAssignment(n) => n.as_rhs(),
         }
@@ -36,7 +35,7 @@ impl Measure for Node {
 
     fn as_mid(&self) -> Option<String> {
         match self {
-            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Newline | Node::Comment(_) | Node::Category(_) => None,
             Node::Command(n) => n.as_mid(),
             Node::VariableAssignment(n) => n.as_mid(),
         }
@@ -46,7 +45,6 @@ impl Measure for Node {
 impl Format for Node {
     fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
         match self {
-            Node::EndOfInput => Ok(String::new()),
             Node::Newline => Ok("\n".to_string()),
             Node::Comment(n) => n.format(config, state),
             Node::Command(n) => n.format(config, state),
