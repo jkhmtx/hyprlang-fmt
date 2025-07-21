@@ -6,7 +6,7 @@ cd "${root}" || exit 1
 
 git ls-files --exclude-standard --others -z '*.sh' && git ls-files --exclude-standard -z '*.sh' >files.lst
 
-mapfile -t files <files.lst
+mapfile -d '' -t files <files.lst
 
 rm files.lst
 
