@@ -1,6 +1,8 @@
 shell
 result
 
+/debug
+
 # Added by cargo
 
 /target

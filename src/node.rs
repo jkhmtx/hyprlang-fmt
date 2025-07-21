@@ -1,0 +1,72 @@
+use crate::grammar::{Rule};
+use pest::iterators::Pair;
+use crate::format::{Measure, Format};
+use std::fmt;
+use crate::state::{Config, BlockState};
+use crate::components::comment::CommentNode;
+use crate::components::command::CommandNode;
+use crate::components::variable_assignment::VariableAssignmentNode;
+use crate::components::category::CategoryNode;
+
+#[derive(PartialEq)]
+pub enum Node {
+    Comment(CommentNode),
+    Command(CommandNode),
+    VariableAssignment(VariableAssignmentNode),
+    Category(CategoryNode),
+    Newline,
+    EndOfInput,
+}
+
+impl Measure for Node {
+    fn as_lhs(&self) -> Option<String> {
+        match self {
+            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Command(n) => n.as_lhs(),
+            Node::VariableAssignment(n) => n.as_lhs(),
+        }
+    }
+    fn as_rhs(&self) -> Option<String> {
+        match self {
+            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Command(n) => n.as_rhs(),
+            Node::VariableAssignment(n) => n.as_rhs(),
+        }
+    }
+
+    fn as_mid(&self) -> Option<String> {
+        match self {
+            Node::Newline | Node::EndOfInput | Node::Comment(_) | Node::Category(_) => None,
+            Node::Command(n) => n.as_mid(),
+            Node::VariableAssignment(n) => n.as_mid(),
+        }
+    }
+}
+
+impl Format for Node {
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+        match self {
+            Node::EndOfInput => Ok(String::new()),
+            Node::Newline => Ok("\n".to_string()),
+            Node::Comment(n) => n.format(config, state),
+            Node::Command(n) => n.format(config, state),
+            Node::VariableAssignment(n) => n.format(config, state),
+            Node::Category(n) => n.format(config, state),
+        }
+    }
+}
+
+impl Node {
+    pub fn new(tag: &Pair<Rule>, config: Config) -> Node {
+        match tag.as_rule() {
+            Rule::comment => Node::Comment(CommentNode::new(tag)),
+            Rule::newline => Node::Newline,
+            Rule::command => Node::Command(CommandNode::new(tag)),
+            Rule::variable_assignment => Node::VariableAssignment(VariableAssignmentNode::new(tag)),
+            Rule::category => Node::Category(CategoryNode::new(tag, 0, config)),
+            Rule::EOI => Node::EndOfInput,
+            _ => unreachable!(),
+        }
+    }
+}
+
