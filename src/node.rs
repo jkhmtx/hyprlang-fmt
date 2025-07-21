@@ -57,16 +57,21 @@ impl Format for Node {
 }
 
 impl Node {
-    pub fn new(tag: &Pair<Rule>, config: Config) -> Node {
-        match tag.as_rule() {
+    pub fn maybe(tag: Option<&Pair<Rule>>, config: Config) -> Option<Node> {
+        tag.and_then(|tag| {
+        if tag.as_rule() == Rule::EOI {
+            return None;
+        }
+
+        Some(match tag.as_rule() {
             Rule::comment => Node::Comment(CommentNode::new(tag)),
             Rule::newline => Node::Newline,
             Rule::command => Node::Command(CommandNode::new(tag)),
             Rule::variable_assignment => Node::VariableAssignment(VariableAssignmentNode::new(tag)),
             Rule::category => Node::Category(CategoryNode::new(tag, 0, config)),
-            Rule::EOI => Node::EndOfInput,
             _ => unreachable!(),
-        }
+        })
+        })
     }
 }
 
