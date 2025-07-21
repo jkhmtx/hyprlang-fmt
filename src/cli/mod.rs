@@ -1,15 +1,5 @@
 mod args;
+mod run;
 
-use clap::Parser;
-use crate::state::Config;
-use args::Args;
-
-pub fn get_config() -> Config {
-    let args = Args::parse();
-        
-    Config {
-        tab_width: args.spaces,
-    }
-
-}
-
+pub use run::run;
+pub use args::{get_config, get_file};
