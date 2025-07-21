@@ -31,8 +31,8 @@ fn get_file_blocks(pair: Pair<Rule>, config: Config) -> Vec<Block> {
 
             nodes.push(node);
 
-            let mut nodes_iter = nodes.iter().rev();
-            if let (Some(last), Some(near_last)) = (nodes_iter.next(), nodes_iter.next()) {
+            let mut nodes_iter = nodes.iter();
+            if let (Some(last), Some(near_last)) = (nodes_iter.next_back(), nodes_iter.next_back()) {
                 // Consume until non-newline
                 if *last == Node::Newline && *near_last == Node::Newline {
                     for tag in inner.by_ref() {
