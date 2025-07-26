@@ -9,7 +9,7 @@ use pest::iterators::Pair;
 use std::fmt;
 use std::fmt::Write as _;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct CategoryNode {
     ident: String,
     block: Block,

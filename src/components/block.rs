@@ -1,4 +1,4 @@
-use crate::format::{Format, Measure};
+use crate::format::Format;
 use crate::node::Node;
 use crate::state::{BlockState, Config};
 use std::fmt;
@@ -22,7 +22,7 @@ use std::fmt;
 //
 // ident         = foo             # trailing 1
 // another_ident = much_longer_bar # trailing 2
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct Block {
     state: BlockState,
 
@@ -32,30 +32,9 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn new(nodes: Vec<Node>, level: u8, config: Config) -> Block {
-        let indent = config.tab_width * level;
-
-        let lhs_max_length = nodes
-            .iter()
-            .filter_map(|node| node.as_lhs().as_deref().map(str::len))
-            .max()
-            .unwrap_or(0);
-
-        let max_length = nodes
-            .iter()
-            .filter_map(|node| node.as_rhs().as_deref().map(str::len))
-            .max()
-            .unwrap_or(0)
-            + usize::from(indent)
-            + lhs_max_length
-            + 3;
-
+    pub fn new(nodes: Vec<Node>, level: u8, config: Config) -> Self {
         Block {
-            state: BlockState {
-                level,
-                lhs_max_length,
-                max_length,
-            },
+            state: BlockState::new(&nodes, level, config),
             nodes,
             config,
         }

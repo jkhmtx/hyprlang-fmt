@@ -5,7 +5,7 @@ use crate::state::{BlockState, Config};
 use pest::iterators::Pair;
 use std::fmt;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct CommentNode {
     tokens: String,
 }

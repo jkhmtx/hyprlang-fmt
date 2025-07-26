@@ -1,11 +1,11 @@
-use crate::format::{text, Format, Measure};
+use crate::format::{text, Format, Sections, Width};
 use crate::grammar::Rule;
 use crate::state::{BlockState, Config};
 use pest::iterators::Pair;
 use std::fmt;
 use std::fmt::Write as _;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct VariableAssignmentNode {
     comment: Option<String>,
     expression: String,
@@ -14,7 +14,7 @@ pub struct VariableAssignmentNode {
 
 impl Format for VariableAssignmentNode {
     fn format(&self, _config: Config, state: &BlockState) -> Result<String, fmt::Error> {
-        let lhs_pad_right = state.lhs_max_length;
+        let lhs_pad_right = state.lhs_width();
 
         let lhs = self.as_lhs().expect("infallible");
         let mid = self.as_mid().expect("infallible");
@@ -24,7 +24,9 @@ impl Format for VariableAssignmentNode {
         write!(s, "{lhs:lhs_pad_right$}{mid}{rhs}")?;
 
         if let Some(c) = &self.comment {
-            let comment_gap = state.max_length - s.as_str().len();
+            let sizes = [2_usize, state.total_width() - s.as_str().len()];
+            let comment_gap = sizes.iter().max().unwrap();
+
             write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
         }
 
@@ -32,7 +34,7 @@ impl Format for VariableAssignmentNode {
     }
 }
 
-impl Measure for VariableAssignmentNode {
+impl Sections for VariableAssignmentNode {
     fn as_lhs(&self) -> Option<String> {
         Some(self.ident.to_string())
     }
