@@ -6,6 +6,7 @@ use crate::node::Node;
 use crate::state::Config;
 use pest::iterators::Pair;
 
+#[derive(PartialEq, Debug)]
 pub struct File {
     blocks: Vec<Block>,
 }
@@ -54,10 +55,16 @@ impl File {
                     // Consume until non-newline
                     if *last == Node::Newline && *near_last == Node::Newline {
                         for tag in inner.by_ref() {
-                            let tag = Node::maybe(Some(&tag), config);
+                            let node = Node::maybe(Some(&tag), config).and_then(|node| {
+                                if node == Node::Newline {
+                                    None
+                                } else {
+                                    Some(node)
+                                }
+                            });
 
-                            if let Some(tag) = tag {
-                                nodes.push(tag);
+                            if let Some(node) = node {
+                                nodes.push(node);
                                 break;
                             }
                         }

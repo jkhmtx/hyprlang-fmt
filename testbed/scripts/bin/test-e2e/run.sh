@@ -21,6 +21,6 @@ export HYPRLAND_CONF="${HYPRLAND_CONF}"
 # shellcheck disable=SC2002
 cat ./testbed/hypr/hyprland.conf | hyprlang-fmt >formatted
 
-diff formatted "${HYPRLAND_CONF}"
+diff -y --suppress-common-lines "${HYPRLAND_CONF}" formatted
 
 log Success

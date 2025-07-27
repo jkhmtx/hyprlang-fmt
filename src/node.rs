@@ -2,13 +2,13 @@ use crate::components::category::CategoryNode;
 use crate::components::command::CommandNode;
 use crate::components::comment::CommentNode;
 use crate::components::variable_assignment::VariableAssignmentNode;
-use crate::format::{Format, Measure};
+use crate::format::{Format, Sections};
 use crate::grammar::Rule;
 use crate::state::{BlockState, Config};
 use pest::iterators::Pair;
 use std::fmt;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Node {
     Comment(CommentNode),
     Command(CommandNode),
@@ -17,7 +17,7 @@ pub enum Node {
     Newline,
 }
 
-impl Measure for Node {
+impl Sections for Node {
     fn as_lhs(&self) -> Option<String> {
         match self {
             Node::Newline | Node::Comment(_) | Node::Category(_) => None,

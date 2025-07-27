@@ -1,3 +1,5 @@
+edition = "2024"
+
 [package]
 name = "hyprlang-fmt"
 description = "A formatter for the hyprlang configuration language"
