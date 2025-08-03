@@ -17,5 +17,5 @@ fn main() {
 
     let file = cli::get_file();
 
-    cli::run(config, &file);
+    cli::run(&config, &file);
 }

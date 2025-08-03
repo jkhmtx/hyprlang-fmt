@@ -2,61 +2,64 @@ use crate::components::node::Node;
 use crate::format::{Sections, Width};
 
 #[derive(PartialEq, Debug)]
+pub struct LengthsInclusive {
+    pub lhs: usize,
+    pub mid: usize,
+    pub rhs: Option<usize>,
+}
+
+#[derive(PartialEq, Debug)]
 pub struct BlockState {
     // The indentation level of the block
     pub level: u8,
-    // The longest identifier in the block's length
-    lhs_max_length: usize,
-    // The longest statement in the block's length
-    max_length: usize,
+    pub max_lengths: Option<LengthsInclusive>,
 }
 
 impl Width for BlockState {
     fn lhs_width(&self) -> usize {
-        self.lhs_max_length
+        match &self.max_lengths {
+            Some(lengths) => lengths.lhs,
+            _ => 0,
+        }
     }
 
-    fn total_width(&self) -> usize {
-        self.max_length
+    fn total_width(&self, config: &Config) -> usize {
+        match &self.max_lengths {
+            Some(lengths) => {
+                lengths.rhs.unwrap_or(lengths.mid) + usize::from(config.tab_width * self.level)
+            }
+            _ => 0,
+        }
     }
-}
-
-pub struct LengthsInclusive {
-    lhs: usize,
-    mid: usize,
-    rhs: Option<usize>,
-    comment: Option<usize>,
 }
 
 impl BlockState {
-    pub fn new(nodes: &[Node], level: u8, config: Config) -> Self {
-        let indent = usize::from(config.tab_width * level);
+    pub fn new(nodes: &[Node], level: u8) -> Self {
+        let max_lengths = {
+            let mut lhs = 0;
+            let mut mid = 0;
+            let mut rhs = None;
 
-        let lhs_max_length = nodes
-            .iter()
-            .map(|node| node.as_sections().map_or(0, |section| section.lhs.len()))
-            .max()
-            .unwrap_or(0);
+            for section in nodes.iter().filter_map(Sections::as_sections) {
+                lhs = std::cmp::max(lhs, section.lhs.len());
+                mid = std::cmp::max(mid, lhs + section.mid.len());
+                rhs = match (rhs, section.rhs) {
+                    (Some(rhs), Some(section_rhs)) => {
+                        Some(std::cmp::max(rhs, mid + section_rhs.len()))
+                    }
+                    (Some(rhs), None) => Some(rhs),
+                    _ => None,
+                };
+            }
 
-        let max_length = if let Some(max) = nodes
-            .iter()
-            .map(|node| {
-                node.as_sections().map_or(0, |section| {
-                    section.lhs.len() + section.mid.len() + section.rhs.map_or(0, str::len)
-                })
-            })
-            .max()
-        {
-            max + indent
-        } else {
-            0
+            if lhs == 0 {
+                None
+            } else {
+                Some(LengthsInclusive { lhs, mid, rhs })
+            }
         };
 
-        BlockState {
-            level,
-            lhs_max_length,
-            max_length,
-        }
+        BlockState { level, max_lengths }
     }
 }
 

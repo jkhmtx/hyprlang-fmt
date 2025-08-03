@@ -11,7 +11,7 @@ pub struct CommentNode {
 }
 
 impl Format for CommentNode {
-    fn format(&self, _config: Config, _state: &BlockState) -> Result<String, fmt::Error> {
+    fn format(&self, _config: &Config, _state: &BlockState) -> Result<String, fmt::Error> {
         Ok(self.tokens.to_string())
     }
 }

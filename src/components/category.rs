@@ -10,13 +10,13 @@ use std::fmt;
 use std::fmt::Write as _;
 
 #[derive(PartialEq, Debug)]
-pub struct CategoryNode {
+pub struct CategoryNode<'a> {
     ident: String,
-    block: Block,
+    block: Block<'a>,
 }
 
-impl Format for CategoryNode {
-    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+impl Format for CategoryNode<'_> {
+    fn format(&self, config: &Config, state: &BlockState) -> Result<String, fmt::Error> {
         let CategoryNode { ident, block } = self;
         let mut s = String::new();
         write!(s, "{ident} {{")?;
@@ -28,8 +28,8 @@ impl Format for CategoryNode {
     }
 }
 
-impl CategoryNode {
-    pub fn new(tag: &Pair<Rule>, level: u8, config: Config) -> Self {
+impl<'a> CategoryNode<'a> {
+    pub fn new(tag: &Pair<Rule>, level: u8, config: &'a Config) -> Self {
         let mut ident = None;
         let mut nodes = Vec::new();
 

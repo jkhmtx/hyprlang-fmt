@@ -15,7 +15,7 @@ pub struct CommandNode {
 }
 
 impl Format for CommandNode {
-    fn format(&self, _config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+    fn format(&self, config: &Config, state: &BlockState) -> Result<String, fmt::Error> {
         let lhs_pad_right = state.lhs_width();
 
         let Some(SectionsView { lhs, mid, rhs }) = self.as_sections() else {
@@ -28,7 +28,7 @@ impl Format for CommandNode {
         write!(s, "{lhs:lhs_pad_right$}{mid}{rhs}")?;
 
         if let Some(c) = &self.comment {
-            let sizes = [2_usize, state.total_width() - s.as_str().len()];
+            let sizes = [2_usize, state.total_width(config) - s.as_str().len()];
             let comment_gap = sizes.iter().max().unwrap();
 
             write!(s, " {empty:>comment_gap$}{c}", empty = "")?;

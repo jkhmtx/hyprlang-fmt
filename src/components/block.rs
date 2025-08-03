@@ -23,25 +23,25 @@ use std::fmt;
 // ident         = foo             # trailing 1
 // another_ident = much_longer_bar # trailing 2
 #[derive(PartialEq, Debug)]
-pub struct Block {
+pub struct Block<'a> {
     state: BlockState,
 
-    nodes: Vec<Node>,
+    nodes: Vec<Node<'a>>,
 
-    config: Config,
+    config: &'a Config,
 }
 
-impl Block {
-    pub fn new(nodes: Vec<Node>, level: u8, config: Config) -> Self {
+impl<'a> Block<'a> {
+    pub fn new(nodes: Vec<Node<'a>>, level: u8, config: &'a Config) -> Self {
         Block {
-            state: BlockState::new(&nodes, level, config),
+            state: BlockState::new(&nodes, level),
             nodes,
             config,
         }
     }
 }
 
-impl fmt::Display for Block {
+impl fmt::Display for Block<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         for node in &self.nodes {
             if node != &Node::Newline {
