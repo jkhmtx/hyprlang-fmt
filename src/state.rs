@@ -1,5 +1,5 @@
+use crate::components::node::Node;
 use crate::format::{Sections, Width};
-use crate::node::Node;
 
 #[derive(PartialEq, Debug)]
 pub struct BlockState {
@@ -21,27 +21,36 @@ impl Width for BlockState {
     }
 }
 
+pub struct LengthsInclusive {
+    lhs: usize,
+    mid: usize,
+    rhs: Option<usize>,
+    comment: Option<usize>,
+}
+
 impl BlockState {
     pub fn new(nodes: &[Node], level: u8, config: Config) -> Self {
         let indent = usize::from(config.tab_width * level);
 
         let lhs_max_length = nodes
             .iter()
-            .filter_map(|node| node.as_lhs().as_deref().map(str::len))
+            .map(|node| node.as_sections().map_or(0, |section| section.lhs.len()))
             .max()
             .unwrap_or(0);
 
-        let max_length = nodes
+        let max_length = if let Some(max) = nodes
             .iter()
             .map(|node| {
-                [node.as_lhs(), node.as_mid(), node.as_rhs()]
-                    .map(|n| n.as_deref().map_or(0, str::len))
-                    .iter()
-                    .sum()
+                node.as_sections().map_or(0, |section| {
+                    section.lhs.len() + section.mid.len() + section.rhs.map_or(0, str::len)
+                })
             })
             .max()
-            .unwrap_or(0)
-            + indent;
+        {
+            max + indent
+        } else {
+            0
+        };
 
         BlockState {
             level,

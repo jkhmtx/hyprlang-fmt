@@ -1,4 +1,4 @@
-use crate::format::{text, Format, Sections, Width};
+use crate::format::{text, Format, Sections, SectionsView, Width};
 use crate::grammar::Rule;
 use crate::state::{BlockState, Config};
 use pest::iterators::Pair;
@@ -8,6 +8,8 @@ use std::fmt::Write as _;
 #[derive(PartialEq, Debug)]
 pub struct CommandNode {
     comment: Option<String>,
+    eq: String,
+    joined_parts: Option<String>,
     ident: String,
     parts: Vec<String>,
 }
@@ -16,9 +18,11 @@ impl Format for CommandNode {
     fn format(&self, _config: Config, state: &BlockState) -> Result<String, fmt::Error> {
         let lhs_pad_right = state.lhs_width();
 
-        let lhs = self.as_lhs().expect("infallible");
-        let mid = self.as_mid().expect("infallible");
-        let rhs = self.as_rhs().expect("infallible");
+        let Some(SectionsView { lhs, mid, rhs }) = self.as_sections() else {
+            unreachable!()
+        };
+
+        let rhs = rhs.unwrap_or("");
 
         let mut s = String::new();
         write!(s, "{lhs:lhs_pad_right$}{mid}{rhs}")?;
@@ -34,26 +38,12 @@ impl Format for CommandNode {
 }
 
 impl Sections for CommandNode {
-    fn as_lhs(&self) -> Option<String> {
-        Some(self.ident.to_string())
-    }
-    fn as_rhs(&self) -> Option<String> {
-        Some(
-            self.parts
-                .iter()
-                .map(std::string::ToString::to_string)
-                .collect::<Vec<_>>()
-                .join(" "),
-        )
-    }
-    fn as_mid(&self) -> Option<String> {
-        let has_lhs = self.as_lhs().map(|side| !side.is_empty());
-        let has_rhs = self.as_rhs().map(|side| !side.is_empty());
-        match (has_lhs, has_rhs) {
-            (Some(l), Some(r)) if l && r => Some(String::from(" = ")),
-            (Some(l), Some(r)) if l && !r => Some(String::from(" =")),
-            _ => None,
-        }
+    fn as_sections(&self) -> Option<SectionsView<'_>> {
+        Some(SectionsView {
+            lhs: &self.ident,
+            mid: &self.eq,
+            rhs: self.joined_parts.as_deref(),
+        })
     }
 }
 
@@ -76,9 +66,30 @@ impl CommandNode {
             }
         }
 
+        let ident = ident.expect("command must have an ident");
+
+        let has_lhs = !ident.is_empty();
+        let has_rhs = parts.iter().any(|part| !part.is_empty());
+
+        let eq = String::from(if has_lhs && has_rhs { " = " } else { " =" });
+
+        let joined_parts = if parts.is_empty() {
+            None
+        } else {
+            Some(
+                parts
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(" "),
+            )
+        };
+
         CommandNode {
             comment,
-            ident: ident.expect("command must have an ident"),
+            eq,
+            joined_parts,
+            ident,
             parts,
         }
     }

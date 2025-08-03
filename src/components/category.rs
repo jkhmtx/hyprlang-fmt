@@ -1,9 +1,9 @@
 use crate::components::block::Block;
 use crate::components::command::CommandNode;
 use crate::components::comment::CommentNode;
+use crate::components::node::Node;
 use crate::format::{text, Format};
 use crate::grammar::Rule;
-use crate::node::Node;
 use crate::state::{BlockState, Config};
 use pest::iterators::Pair;
 use std::fmt;

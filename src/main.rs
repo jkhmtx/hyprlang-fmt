@@ -10,7 +10,6 @@ mod cli;
 mod components;
 mod format;
 mod grammar;
-mod node;
 mod state;
 
 fn main() {

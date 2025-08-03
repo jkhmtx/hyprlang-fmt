@@ -1,5 +1,5 @@
+use crate::components::node::Node;
 use crate::format::Format;
-use crate::node::Node;
 use crate::state::{BlockState, Config};
 use std::fmt;
 
@@ -44,14 +44,12 @@ impl Block {
 impl fmt::Display for Block {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         for node in &self.nodes {
-            let s = node.format(self.config, &self.state)?;
-
             if node != &Node::Newline {
                 let leading_spaces = usize::from(self.config.tab_width * self.state.level);
                 write!(formatter, "{empty:>leading_spaces$}", empty = "")?;
             }
 
-            formatter.write_str(&s)?;
+            formatter.write_str(&node.format(self.config, &self.state)?)?;
         }
 
         Ok(())

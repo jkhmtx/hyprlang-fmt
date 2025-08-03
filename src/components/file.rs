@@ -1,8 +1,8 @@
 use crate::components::block::Block;
 use std::fmt;
 
+use crate::components::node::Node;
 use crate::grammar::Rule;
-use crate::node::Node;
 use crate::state::Config;
 use pest::iterators::Pair;
 

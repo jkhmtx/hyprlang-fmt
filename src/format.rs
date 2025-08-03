@@ -7,10 +7,14 @@ pub trait Format {
     fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error>;
 }
 
+pub struct SectionsView<'a> {
+    pub lhs: &'a str,
+    pub mid: &'a str,
+    pub rhs: Option<&'a str>,
+}
+
 pub trait Sections {
-    fn as_lhs(&self) -> Option<String>;
-    fn as_rhs(&self) -> Option<String>;
-    fn as_mid(&self) -> Option<String>;
+    fn as_sections(&self) -> Option<SectionsView<'_>>;
 }
 
 pub trait Width {
