@@ -4,7 +4,7 @@ use pest::iterators::Pair;
 use std::fmt;
 
 pub trait Format {
-    fn format(&self, config: &Config, state: &BlockState) -> Result<String, fmt::Error>;
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error>;
 }
 
 pub struct SectionsView<'a> {
@@ -19,7 +19,7 @@ pub trait Sections {
 
 pub trait Width {
     fn lhs_width(&self) -> usize;
-    fn total_width(&self, config: &Config) -> usize;
+    fn total_width(&self, config: Config) -> usize;
 }
 
 pub fn text(tag: &Pair<Rule>) -> String {

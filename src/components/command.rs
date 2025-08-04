@@ -15,7 +15,7 @@ pub struct CommandNode {
 }
 
 impl Format for CommandNode {
-    fn format(&self, config: &Config, state: &BlockState) -> Result<String, fmt::Error> {
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
         let lhs_pad_right = state.lhs_width();
 
         let Some(SectionsView { lhs, mid, rhs }) = self.as_sections() else {

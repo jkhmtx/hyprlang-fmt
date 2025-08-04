@@ -7,11 +7,11 @@ use crate::state::Config;
 use pest::iterators::Pair;
 
 #[derive(PartialEq, Debug)]
-pub struct File<'a> {
-    blocks: Vec<Block<'a>>,
+pub struct File {
+    blocks: Vec<Block>,
 }
 
-impl fmt::Display for File<'_> {
+impl fmt::Display for File {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         for block in &self.blocks {
             write!(formatter, "{block}")?;
@@ -21,8 +21,8 @@ impl fmt::Display for File<'_> {
     }
 }
 
-impl<'a> File<'a> {
-    pub fn new(pair: Pair<Rule>, config: &'a Config) -> Self {
+impl File {
+    pub fn new(pair: Pair<Rule>, config: Config) -> Self {
         let mut blocks = Vec::new();
 
         let mut inner = pair.into_inner();

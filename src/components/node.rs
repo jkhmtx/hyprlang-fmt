@@ -9,15 +9,15 @@ use pest::iterators::Pair;
 use std::fmt;
 
 #[derive(PartialEq, Debug)]
-pub enum Node<'a> {
+pub enum Node {
     Comment(CommentNode),
     Command(CommandNode),
     VariableAssignment(VariableAssignmentNode),
-    Category(CategoryNode<'a>),
+    Category(CategoryNode),
     Newline,
 }
 
-impl Sections for Node<'_> {
+impl Sections for Node {
     fn as_sections(&self) -> Option<SectionsView<'_>> {
         match self {
             Node::Newline | Node::Comment(_) | Node::Category(_) => None,
@@ -27,8 +27,8 @@ impl Sections for Node<'_> {
     }
 }
 
-impl Format for Node<'_> {
-    fn format(&self, config: &Config, state: &BlockState) -> Result<String, fmt::Error> {
+impl Format for Node {
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
         match self {
             Node::Newline => Ok("\n".to_string()),
             Node::Comment(n) => n.format(config, state),
@@ -39,8 +39,8 @@ impl Format for Node<'_> {
     }
 }
 
-impl Node<'_> {
-    pub fn maybe<'a>(tag: Option<&Pair<Rule>>, config: &'a Config) -> Option<Node<'a>> {
+impl Node {
+    pub fn maybe(tag: Option<&Pair<Rule>>, config: Config) -> Option<Node> {
         tag.and_then(|tag| {
             if tag.as_rule() == Rule::EOI {
                 return None;

@@ -8,7 +8,7 @@ pub enum RunError {
     InvalidInput,
 }
 
-pub fn run(config: &Config, file: &str) {
+pub fn run(config: Config, file: &str) {
     let pair = HyprlangParser::parse(Rule::file, file)
         .map_err(|_| RunError::InvalidInput)
         .map(|mut parsed| unsafe { parsed.next().unwrap_unchecked() })

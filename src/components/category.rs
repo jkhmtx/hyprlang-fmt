@@ -4,32 +4,38 @@ use crate::components::comment::CommentNode;
 use crate::components::node::Node;
 use crate::format::{text, Format};
 use crate::grammar::Rule;
-use crate::state::{BlockState, Config};
+use crate::state::{BlockState, Config, IndentMode};
 use pest::iterators::Pair;
 use std::fmt;
 use std::fmt::Write as _;
 
 #[derive(PartialEq, Debug)]
-pub struct CategoryNode<'a> {
+pub struct CategoryNode {
     ident: String,
-    block: Block<'a>,
+    block: Block,
 }
 
-impl Format for CategoryNode<'_> {
-    fn format(&self, config: &Config, state: &BlockState) -> Result<String, fmt::Error> {
+impl Format for CategoryNode {
+    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
         let CategoryNode { ident, block } = self;
         let mut s = String::new();
         write!(s, "{ident} {{")?;
         write!(s, "{}", &block.to_string())?;
-        let leading_spaces = usize::from(config.tab_width * state.level);
-        write!(s, "{empty:>leading_spaces$}", empty = "")?;
+
+        let leading_whitespace = (match config.indent_mode {
+            IndentMode::Tabs => "\t",
+            IndentMode::Spaces => " ",
+        })
+        .repeat(usize::from(config.indent_width * state.level));
+
+        write!(s, "{leading_whitespace}")?;
         write!(s, "}}")?;
         Ok(s)
     }
 }
 
-impl<'a> CategoryNode<'a> {
-    pub fn new(tag: &Pair<Rule>, level: u8, config: &'a Config) -> Self {
+impl CategoryNode {
+    pub fn new(tag: &Pair<Rule>, level: u8, config: Config) -> Self {
         let mut ident = None;
         let mut nodes = Vec::new();
 

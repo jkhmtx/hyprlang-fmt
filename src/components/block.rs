@@ -1,6 +1,6 @@
 use crate::components::node::Node;
 use crate::format::Format;
-use crate::state::{BlockState, Config};
+use crate::state::{BlockState, Config, IndentMode};
 use std::fmt;
 
 // Blocks are lines of code localized by either:
@@ -23,16 +23,16 @@ use std::fmt;
 // ident         = foo             # trailing 1
 // another_ident = much_longer_bar # trailing 2
 #[derive(PartialEq, Debug)]
-pub struct Block<'a> {
+pub struct Block {
     state: BlockState,
 
-    nodes: Vec<Node<'a>>,
+    nodes: Vec<Node>,
 
-    config: &'a Config,
+    config: Config,
 }
 
-impl<'a> Block<'a> {
-    pub fn new(nodes: Vec<Node<'a>>, level: u8, config: &'a Config) -> Self {
+impl Block {
+    pub fn new(nodes: Vec<Node>, level: u8, config: Config) -> Self {
         Block {
             state: BlockState::new(&nodes, level),
             nodes,
@@ -41,12 +41,16 @@ impl<'a> Block<'a> {
     }
 }
 
-impl fmt::Display for Block<'_> {
+impl fmt::Display for Block {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         for node in &self.nodes {
             if node != &Node::Newline {
-                let leading_spaces = usize::from(self.config.tab_width * self.state.level);
-                write!(formatter, "{empty:>leading_spaces$}", empty = "")?;
+                let leading_whitespace = (match self.config.indent_mode {
+                    IndentMode::Tabs => "\t",
+                    IndentMode::Spaces => " ",
+                })
+                .repeat(usize::from(self.config.indent_width * self.state.level));
+                write!(formatter, "{leading_whitespace}")?;
             }
 
             formatter.write_str(&node.format(self.config, &self.state)?)?;
