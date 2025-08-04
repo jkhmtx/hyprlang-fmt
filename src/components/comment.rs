@@ -1,7 +1,7 @@
 use crate::format::text;
-use crate::format::Format;
+use crate::format::{Format, FormatStrategy};
 use crate::grammar::Rule;
-use crate::state::{BlockState, Config};
+use crate::state::BlockState;
 use pest::iterators::Pair;
 use std::fmt;
 
@@ -11,7 +11,7 @@ pub struct CommentNode {
 }
 
 impl Format for CommentNode {
-    fn format(&self, _config: Config, _state: &BlockState) -> Result<String, fmt::Error> {
+    fn format(&self, _config: FormatStrategy, _state: &BlockState) -> Result<String, fmt::Error> {
         Ok(self.tokens.to_string())
     }
 }

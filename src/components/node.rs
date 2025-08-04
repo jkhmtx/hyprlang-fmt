@@ -2,9 +2,11 @@ use crate::components::category::CategoryNode;
 use crate::components::command::CommandNode;
 use crate::components::comment::CommentNode;
 use crate::components::variable_assignment::VariableAssignmentNode;
-use crate::format::{Format, Sections, SectionsView};
+use crate::config::Config;
+use crate::format::{Format, FormatStrategy};
 use crate::grammar::Rule;
-use crate::state::{BlockState, Config};
+use crate::state::BlockState;
+use crate::state::{Sections, SectionsView};
 use pest::iterators::Pair;
 use std::fmt;
 
@@ -28,7 +30,7 @@ impl Sections for Node {
 }
 
 impl Format for Node {
-    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+    fn format(&self, config: FormatStrategy, state: &BlockState) -> Result<String, fmt::Error> {
         match self {
             Node::Newline => Ok("\n".to_string()),
             Node::Comment(n) => n.format(config, state),

@@ -8,6 +8,7 @@
 
 mod cli;
 mod components;
+mod config;
 mod format;
 mod grammar;
 mod state;

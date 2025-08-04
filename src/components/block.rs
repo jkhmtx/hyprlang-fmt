@@ -1,6 +1,7 @@
 use crate::components::node::Node;
-use crate::format::Format;
-use crate::state::{BlockState, Config, IndentMode};
+use crate::config::Config;
+use crate::format::{Format, FormatStrategy};
+use crate::state::BlockState;
 use std::fmt;
 
 // Blocks are lines of code localized by either:
@@ -43,17 +44,14 @@ impl Block {
 
 impl fmt::Display for Block {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let strategy = FormatStrategy::new(self.config);
         for node in &self.nodes {
             if node != &Node::Newline {
-                let leading_whitespace = (match self.config.indent_mode {
-                    IndentMode::Tabs => "\t",
-                    IndentMode::Spaces => " ",
-                })
-                .repeat(usize::from(self.config.indent_width * self.state.level));
+                let leading_whitespace = (strategy.get_leading_whitespace)(&self.state);
                 write!(formatter, "{leading_whitespace}")?;
             }
 
-            formatter.write_str(&node.format(self.config, &self.state)?)?;
+            formatter.write_str(&node.format(FormatStrategy::new(self.config), &self.state)?)?;
         }
 
         Ok(())

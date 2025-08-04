@@ -1,6 +1,6 @@
 use crate::components::file::File;
+use crate::config::Config;
 use crate::grammar::{HyprlangParser, Rule};
-use crate::state::Config;
 use pest::Parser;
 
 #[derive(Debug)]

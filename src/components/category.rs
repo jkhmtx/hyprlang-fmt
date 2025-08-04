@@ -2,9 +2,10 @@ use crate::components::block::Block;
 use crate::components::command::CommandNode;
 use crate::components::comment::CommentNode;
 use crate::components::node::Node;
-use crate::format::{text, Format};
+use crate::config::Config;
+use crate::format::{text, Format, FormatStrategy};
 use crate::grammar::Rule;
-use crate::state::{BlockState, Config, IndentMode};
+use crate::state::BlockState;
 use pest::iterators::Pair;
 use std::fmt;
 use std::fmt::Write as _;
@@ -16,17 +17,13 @@ pub struct CategoryNode {
 }
 
 impl Format for CategoryNode {
-    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
+    fn format(&self, strategy: FormatStrategy, state: &BlockState) -> Result<String, fmt::Error> {
         let CategoryNode { ident, block } = self;
         let mut s = String::new();
         write!(s, "{ident} {{")?;
         write!(s, "{}", &block.to_string())?;
 
-        let leading_whitespace = (match config.indent_mode {
-            IndentMode::Tabs => "\t",
-            IndentMode::Spaces => " ",
-        })
-        .repeat(usize::from(config.indent_width * state.level));
+        let leading_whitespace = (strategy.get_leading_whitespace)(state);
 
         write!(s, "{leading_whitespace}")?;
         write!(s, "}}")?;

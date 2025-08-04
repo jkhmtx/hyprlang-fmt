@@ -2,8 +2,8 @@ use crate::components::block::Block;
 use std::fmt;
 
 use crate::components::node::Node;
+use crate::config::Config;
 use crate::grammar::Rule;
-use crate::state::Config;
 use pest::iterators::Pair;
 
 #[derive(PartialEq, Debug)]

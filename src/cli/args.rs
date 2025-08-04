@@ -1,4 +1,4 @@
-use crate::state::{
+use crate::config::{
     CommandRhsSpacingContext, CommandRhsSpacingMode, CommentSpacingContext, Config, IndentMode,
 };
 use clap::Parser;

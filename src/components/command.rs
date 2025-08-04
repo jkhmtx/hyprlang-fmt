@@ -1,6 +1,7 @@
-use crate::format::{text, Format, Sections, SectionsView, Width};
+use crate::format::{text, Format, FormatStrategy};
 use crate::grammar::Rule;
-use crate::state::{BlockState, Config};
+use crate::state::BlockState;
+use crate::state::{Sections, SectionsView};
 use pest::iterators::Pair;
 use std::fmt;
 use std::fmt::Write as _;
@@ -15,8 +16,8 @@ pub struct CommandNode {
 }
 
 impl Format for CommandNode {
-    fn format(&self, config: Config, state: &BlockState) -> Result<String, fmt::Error> {
-        let lhs_pad_right = state.lhs_width();
+    fn format(&self, strategy: FormatStrategy, state: &BlockState) -> Result<String, fmt::Error> {
+        let lhs_pad_right = (strategy.get_lhs_pad_right)(state);
 
         let Some(SectionsView { lhs, mid, rhs }) = self.as_sections() else {
             unreachable!()
@@ -28,8 +29,7 @@ impl Format for CommandNode {
         write!(s, "{lhs:lhs_pad_right$}{mid}{rhs}")?;
 
         if let Some(c) = &self.comment {
-            let sizes = [2_usize, state.total_width(config) - s.as_str().len()];
-            let comment_gap = sizes.iter().max().unwrap();
+            let comment_gap = (strategy.get_comment_offset)(state, s.as_str());
 
             write!(s, " {empty:>comment_gap$}{c}", empty = "")?;
         }
