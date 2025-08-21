@@ -33,6 +33,7 @@
     devShell = import ./nix/dev-shell.nix projectInputs;
   in {
     inherit devShell;
+    inherit (projectInputs.projectNamespace) root;
     packages."${system}".default = package;
   };
 }

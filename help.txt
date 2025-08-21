@@ -24,34 +24,6 @@ Options:
           [default: spaces]
           [possible values: tabs, spaces]
 
-      --comment-spacing-context <COMMENT_SPACING_CONTEXT>
-          When offsetting trailing comments for equal width spacing, determine what block context to use.
-          
-          - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
-          - in "category" context, trailing comments in the same category will start at the same position.
-          - in "file" context, trailing comments in the entire file will start at the same position.
-          
-          [default: block]
-          [possible values: block, category, file]
-
-      --command-rhs-spacing-mode <COMMAND_RHS_SPACING_MODE>
-          When formatting the right-hand side of command expressions, determine what spacing mode to use.
-          
-          - "compact" spacing mode will leave no whitespace between comma-separated values.
-          - "equidistant" spacing mode will evenly space command-separated values, using the "--command-rhs-spacing-context"
-          
-          [default: compact]
-          [possible values: compact, equidistant]
-
-      --command-rhs-spacing-context <COMMAND_RHS_SPACING_CONTEXT>
-          When formatting the right-hand side of command expressions, determine what block context to use.
-          
-          - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
-          - in "category" context, trailing comments in the same category will start at the same position.
-          
-          [default: block]
-          [possible values: block, category]
-
   -h, --help
           Print help (see a summary with '-h')
 

@@ -28,28 +28,30 @@ pub struct Args {
     /// Whether to use tabs or spaces for indentation.
     #[arg(long, verbatim_doc_comment, default_value_t)]
     pub indent_mode: IndentMode,
+    // FIXME: Implement me!
+    // /// When offsetting trailing comments for equal width spacing, determine what block context to use.
+    // ///
+    // /// - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
+    // /// - in "category" context, trailing comments in the same category will start at the same position.
+    // /// - in "file" context, trailing comments in the entire file will start at the same position.
+    // #[arg(long, verbatim_doc_comment, default_value_t)]
+    // pub comment_spacing_context: CommentSpacingContext,
 
-    /// When offsetting trailing comments for equal width spacing, determine what block context to use.
-    ///
-    /// - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
-    /// - in "category" context, trailing comments in the same category will start at the same position.
-    /// - in "file" context, trailing comments in the entire file will start at the same position.
-    #[arg(long, verbatim_doc_comment, default_value_t)]
-    pub comment_spacing_context: CommentSpacingContext,
+    // FIXME: Implement me!
+    // /// When formatting the right-hand side of command expressions, determine what spacing mode to use.
+    // ///
+    // /// - "compact" spacing mode will leave no whitespace between comma-separated values.
+    // /// - "equidistant" spacing mode will evenly space command-separated values, using the "--command-rhs-spacing-context"
+    // #[arg(long, verbatim_doc_comment, default_value_t)]
+    // pub command_rhs_spacing_mode: CommandRhsSpacingMode,
 
-    /// When formatting the right-hand side of command expressions, determine what spacing mode to use.
-    ///
-    /// - "compact" spacing mode will leave no whitespace between comma-separated values.
-    /// - "equidistant" spacing mode will evenly space command-separated values, using the "--command-rhs-spacing-context"
-    #[arg(long, verbatim_doc_comment, default_value_t)]
-    pub command_rhs_spacing_mode: CommandRhsSpacingMode,
-
-    /// When formatting the right-hand side of command expressions, determine what block context to use.
-    ///
-    /// - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
-    /// - in "category" context, trailing comments in the same category will start at the same position.
-    #[arg(long, verbatim_doc_comment, default_value_t)]
-    pub command_rhs_spacing_context: CommandRhsSpacingContext,
+    // FIXME: Implement me!
+    // /// When formatting the right-hand side of command expressions, determine what block context to use.
+    // ///
+    // /// - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
+    // /// - in "category" context, trailing comments in the same category will start at the same position.
+    // #[arg(long, verbatim_doc_comment, default_value_t)]
+    // pub command_rhs_spacing_context: CommandRhsSpacingContext,
 }
 
 impl From<Args> for Config {
@@ -62,9 +64,9 @@ impl From<Args> for Config {
         });
 
         let indent_mode = args.indent_mode;
-        let comment_spacing_context = args.comment_spacing_context;
-        let command_rhs_spacing_mode = args.command_rhs_spacing_mode;
-        let command_rhs_spacing_context = args.command_rhs_spacing_context;
+        let comment_spacing_context = CommentSpacingContext::default();
+        let command_rhs_spacing_mode = CommandRhsSpacingMode::default();
+        let command_rhs_spacing_context = CommandRhsSpacingContext::default();
 
         Self {
             indent_width,
