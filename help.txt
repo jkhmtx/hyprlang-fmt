@@ -1,47 +1,59 @@
-Run a binary or example of the local package
+ _                      _                           __           _
+| |                    | |                         / _|         | |
+| |__  _   _ _ __  _ __| | __ _ _ __   __ _ ______| |_ _ __ ___ | |_
+| '_ \| | | | '_ \| '__| |/ _` | '_ \ / _` |______|  _| '_ ` _ \| __|
+| | | | |_| | |_) | |  | | (_| | | | | (_| |      | | | | | | | | |_
+|_| |_|\__, | .__/|_|  |_|\__,_|_| |_|\__, |      |_| |_| |_| |_|\__|
+        __/ | |                        __/ |
+       |___/|_|                       |___/
 
-Usage: cargo run [OPTIONS] [ARGS]...
+A (the?) formatter for hyprlang.
 
-Arguments:
-  [ARGS]...  Arguments for the binary or example to run
+Usage: hyprlang-fmt [OPTIONS]
 
 Options:
-      --message-format <FMT>     Error format [possible values: human, short, json, json-diagnostic-short, json-diagnostic-rendered-ansi, json-render-diagnostics]
-  -v, --verbose...               Use verbose output (-vv very verbose/build.rs output)
-  -q, --quiet                    Do not print cargo log messages
-      --color <WHEN>             Coloring [possible values: auto, always, never]
-      --config <KEY=VALUE|PATH>  Override a configuration value
-  -Z <FLAG>                      Unstable (nightly-only) flags to Cargo, see 'cargo -Z help' for details
-  -h, --help                     Print help
+      --indent-width <INDENT_WIDTH>
+          How many spaces to use for indentation
+          
+          If not specified, default is 2
+          If not specified, and "--indent-mode=tab", default is 1
 
-Package Selection:
-  -p, --package [<SPEC>]  Package with the target to run
+      --indent-mode <INDENT_MODE>
+          Whether to use tabs or spaces for indentation.
+          
+          [default: spaces]
+          [possible values: tabs, spaces]
 
-Target Selection:
-      --bin [<NAME>]      Name of the bin target to run
-      --example [<NAME>]  Name of the example target to run
+      --comment-spacing-context <COMMENT_SPACING_CONTEXT>
+          When offsetting trailing comments for equal width spacing, determine what block context to use.
+          
+          - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
+          - in "category" context, trailing comments in the same category will start at the same position.
+          - in "file" context, trailing comments in the entire file will start at the same position.
+          
+          [default: block]
+          [possible values: block, category, file]
 
-Feature Selection:
-  -F, --features <FEATURES>  Space or comma separated list of features to activate
-      --all-features         Activate all available features
-      --no-default-features  Do not activate the `default` feature
+      --command-rhs-spacing-mode <COMMAND_RHS_SPACING_MODE>
+          When formatting the right-hand side of command expressions, determine what spacing mode to use.
+          
+          - "compact" spacing mode will leave no whitespace between comma-separated values.
+          - "equidistant" spacing mode will evenly space command-separated values, using the "--command-rhs-spacing-context"
+          
+          [default: compact]
+          [possible values: compact, equidistant]
 
-Compilation Options:
-  -j, --jobs <N>                Number of parallel jobs, defaults to # of CPUs.
-      --keep-going              Do not abort the build as soon as there is an error
-  -r, --release                 Build artifacts in release mode, with optimizations
-      --profile <PROFILE-NAME>  Build artifacts with the specified profile
-      --target [<TRIPLE>]       Build for the target triple
-      --target-dir <DIRECTORY>  Directory for all generated artifacts
-      --unit-graph              Output build graph in JSON (unstable)
-      --timings[=<FMTS>]        Timing output formats (unstable) (comma separated): html, json
+      --command-rhs-spacing-context <COMMAND_RHS_SPACING_CONTEXT>
+          When formatting the right-hand side of command expressions, determine what block context to use.
+          
+          - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
+          - in "category" context, trailing comments in the same category will start at the same position.
+          
+          [default: block]
+          [possible values: block, category]
 
-Manifest Options:
-      --manifest-path <PATH>  Path to Cargo.toml
-      --lockfile-path <PATH>  Path to Cargo.lock (unstable)
-      --ignore-rust-version   Ignore `rust-version` specification in packages
-      --locked                Assert that `Cargo.lock` will remain unchanged
-      --offline               Run without accessing the network
-      --frozen                Equivalent to specifying both --locked and --offline
+  -h, --help
+          Print help (see a summary with '-h')
 
-Run `cargo help run` for more detailed information.
+  -V, --version
+          Print version

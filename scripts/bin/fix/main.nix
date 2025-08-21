@@ -4,9 +4,9 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "fix";
+  name = "root.fix";
 
-  runtimeInputs = [projectNamespace.scripts.check];
+  runtimeInputs = [projectNamespace.root.check];
 
   text = builtins.readFile ./run.sh;
 }

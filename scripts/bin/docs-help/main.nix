@@ -4,12 +4,11 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "root.check";
+  name = "root.docs-help";
 
   runtimeInputs = [
-    projectNamespace.root.docs
-    projectNamespace.root.format
-    projectNamespace.root.lint
+    pkgs.git
+    projectNamespace.rust
   ];
 
   text = builtins.readFile ./run.sh;

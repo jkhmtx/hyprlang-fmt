@@ -4,12 +4,10 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "root.check";
+  name = "root.test";
 
   runtimeInputs = [
-    projectNamespace.root.docs
-    projectNamespace.root.format
-    projectNamespace.root.lint
+    projectNamespace.root.testbed.test-e2e
   ];
 
   text = builtins.readFile ./run.sh;

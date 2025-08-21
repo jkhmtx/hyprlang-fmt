@@ -1,13 +1,8 @@
-{
-  pkgs,
-  package,
-  ...
-}:
+{pkgs, ...}:
 pkgs.writeShellApplication {
-  name = "test-e2e";
+  name = "root.testbed.test-e2e";
 
   runtimeInputs = [
-    package
     pkgs.diffutils
     pkgs.git
   ];

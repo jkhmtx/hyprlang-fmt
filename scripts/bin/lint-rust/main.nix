@@ -4,7 +4,7 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "lint-rust";
+  name = "root.lint-rust";
 
   runtimeInputs = [
     pkgs.findutils

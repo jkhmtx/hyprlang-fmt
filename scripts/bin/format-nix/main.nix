@@ -1,6 +1,6 @@
 {pkgs, ...}:
 pkgs.writeShellApplication {
-  name = "format-nix";
+  name = "root.format-nix";
 
   runtimeInputs = [
     pkgs.alejandra

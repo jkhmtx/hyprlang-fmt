@@ -1,6 +1,6 @@
 {pkgs, ...}:
 pkgs.writeShellApplication {
-  name = "format-shell";
+  name = "root.format-shell";
 
   runtimeInputs = [
     pkgs.git

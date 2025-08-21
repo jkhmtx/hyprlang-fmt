@@ -1,6 +1,6 @@
 {pkgs, ...}:
 pkgs.writeShellApplication {
-  name = "format-yaml";
+  name = "root.format-yaml";
 
   runtimeInputs = [
     pkgs.git

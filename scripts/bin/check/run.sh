@@ -10,27 +10,14 @@ log() {
 	>&2 echo "${PREFIX:-CHECK}: " "${@}"
 }
 
-lints=(
-	lint-github-actions
-	lint-rust
-	lint-shell
-)
+log Documenting...
+root.docs
+log "Documenting done"
 
 log Linting...
-for check in "${lints[@]}"; do
-	"${check}"
-done
+root.lint
 log "Linting done"
 
-formats=(
-	format-nix
-	format-rust
-	format-shell
-	format-yaml
-)
-
 log Formatting...
-for check in "${formats[@]}"; do
-	"${check}"
-done
+root.format
 log "Formatting done"

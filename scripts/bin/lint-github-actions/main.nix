@@ -1,6 +1,6 @@
 {pkgs, ...}:
 pkgs.writeShellApplication {
-  name = "lint-github-actions";
+  name = "root.lint-github-actions";
 
   runtimeInputs = [
     pkgs.actionlint

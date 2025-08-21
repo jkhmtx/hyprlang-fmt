@@ -11,7 +11,7 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Check
-        run: nix run .#scripts.check
+        run: nix run .#root.check
 
   build-and-test:
     runs-on: ubuntu-24.04
@@ -21,4 +21,4 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Build
-        run: nix run .#scripts.build-and-test
+        run: nix run .#root.build-and-test

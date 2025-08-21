@@ -1,6 +1,6 @@
 {pkgs, ...}:
 pkgs.writeShellApplication {
-  name = "lint-shell";
+  name = "root.lint-shell";
 
   runtimeInputs = [
     pkgs.git

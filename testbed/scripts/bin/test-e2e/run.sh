@@ -19,7 +19,7 @@ cd "${root}" || exit 1
 export HYPRLAND_CONF="${HYPRLAND_CONF}"
 
 # shellcheck disable=SC2002
-cat ./testbed/hypr/hyprland.conf | hyprlang-fmt >formatted
+cat ./testbed/hypr/hyprland.conf | nix run >formatted
 
 diff -y --suppress-common-lines "${HYPRLAND_CONF}" formatted
 
