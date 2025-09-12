@@ -1,19 +1,15 @@
-{
-  pkgs,
-  package,
-  ...
-}:
+{pkgs, ...}:
 pkgs.writeShellApplication {
-  name = "test-e2e";
+  name = "root.testbed.test-e2e";
 
   runtimeInputs = [
-    package
     pkgs.diffutils
     pkgs.git
   ];
 
   runtimeEnv = {
     HYPRLAND_CONF = ./hyprland.conf;
+    HYPRIDLE_CONF = ./hypridle.conf;
   };
 
   text = builtins.readFile ./run.sh;

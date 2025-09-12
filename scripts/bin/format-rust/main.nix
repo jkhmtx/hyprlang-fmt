@@ -4,7 +4,7 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "format-rust";
+  name = "root.format-rust";
 
   runtimeInputs = [
     pkgs.findutils

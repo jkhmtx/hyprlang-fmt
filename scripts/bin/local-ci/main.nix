@@ -4,11 +4,11 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "local-ci";
+  name = "root.local-ci";
 
   runtimeInputs = [
-    projectNamespace.scripts.build-and-test
-    projectNamespace.scripts.check
+    projectNamespace.root.build-and-test
+    projectNamespace.root.check
   ];
 
   text = builtins.readFile ./run.sh;

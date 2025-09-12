@@ -1,5 +1,3 @@
-edition = "2024"
-
 [package]
 name = "hyprlang-fmt"
 description = "A formatter for the hyprlang configuration language"
@@ -8,11 +6,7 @@ edition = "2024"
 license = "GPL-3.0"
 repository = "https://www.github.com/jkhmtx/hyprland-fmt.git"
 keywords = ["hyprlang", "hyprland", "format", "fmt"]
-categories = [
-  "command-line-utilities",
-  "development-tools",
-  "parser-implementations",
-]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 clap = { version = "4.5.41", features = ["derive"] }

@@ -4,9 +4,13 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "check";
+  name = "root.check";
 
-  runtimeInputs = builtins.attrValues projectNamespace.scripts.format ++ builtins.attrValues projectNamespace.scripts.lint;
+  runtimeInputs = [
+    projectNamespace.root.docs
+    projectNamespace.root.format
+    projectNamespace.root.lint
+  ];
 
   text = builtins.readFile ./run.sh;
 }

@@ -1,4 +1,4 @@
 # shellcheck shell=bash
 
-check
-build-and-test
+root.check
+root.test
