@@ -14,7 +14,7 @@ in
 
     src = pkgs.lib.sourceByRegex ../. ["src" "src/cli" "src/components" "src/grammar" "src/parsed" ".+\.rs" ".+\.pest" "^Cargo.lock$" "^Cargo.toml$"];
 
-    cargoHash = "sha256-XiIQW7Ro/F1Vl05CwrjTAxAPuQFJejQQJmUPBvWY0oE=";
+    cargoHash = "sha256-qC3EUBAanivZdG0J+pyaJcpGzEWC2RGEXPPaMEj0V6o=";
 
     meta = {
       mainProgram = "hyprlang-fmt";
