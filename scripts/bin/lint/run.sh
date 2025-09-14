@@ -3,3 +3,4 @@
 root.lint-github-actions
 root.lint-rust
 root.lint-shell
+root.lint-version

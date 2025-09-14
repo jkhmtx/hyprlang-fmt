@@ -15,7 +15,9 @@
   root.lint-rust = ../scripts/bin/lint-rust/main.nix;
   root.lint = ../scripts/bin/lint/main.nix;
   root.lint-shell = ../scripts/bin/lint-shell/main.nix;
+  root.lint-version = ../scripts/bin/lint-version/main.nix;
   root.local-ci = ../scripts/bin/local-ci/main.nix;
+  root.release = ../scripts/bin/release/main.nix;
   root.test-rust = ../scripts/bin/test-rust/main.nix;
   root.test = ../scripts/bin/test/main.nix;
   testbed.test-e2e = ../testbed/scripts/bin/test-e2e/main.nix;

@@ -4,12 +4,10 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "root.lint";
+  name = "root.release";
 
   runtimeInputs = [
-    projectNamespace.root.lint-github-actions
-    projectNamespace.root.lint-rust
-    projectNamespace.root.lint-shell
+    pkgs.git
     projectNamespace.root.lint-version
   ];
 

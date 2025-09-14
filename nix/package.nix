@@ -10,7 +10,7 @@
 in
   rustPlatform.buildRustPackage {
     pname = "hyprlang-fmt";
-    version = "1.0";
+    version = "1.0.0";
 
     src = pkgs.lib.sourceByRegex ../. ["src" "src/cli" "src/components" "src/grammar" "src/parsed" ".+\.rs" ".+\.pest" "^Cargo.lock$" "^Cargo.toml$"];
 
