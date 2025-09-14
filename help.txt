@@ -1,0 +1,50 @@
+ _                      _                           __           _
+| |                    | |                         / _|         | |
+| |__  _   _ _ __  _ __| | __ _ _ __   __ _ ______| |_ _ __ ___ | |_
+| '_ \| | | | '_ \| '__| |/ _` | '_ \ / _` |______|  _| '_ ` _ \| __|
+| | | | |_| | |_) | |  | | (_| | | | | (_| |      | | | | | | | | |_
+|_| |_|\__, | .__/|_|  |_|\__,_|_| |_|\__, |      |_| |_| |_| |_|\__|
+        __/ | |                        __/ |
+       |___/|_|                       |___/
+
+A (the?) formatter for hyprlang.
+
+Usage: hyprlang-fmt [OPTIONS]
+
+Options:
+      --indent-width <INDENT_WIDTH>
+          How many chars to use for indentation
+          
+          If not specified, default is 2 (spaces)
+          If not specified, and "--indent-mode=tab", default is 1
+
+      --indent-mode <INDENT_MODE>
+          Whether to use tabs or spaces for indentation.
+          
+          [default: spaces]
+          [possible values: tabs, spaces]
+
+      --eq-spacing-context <EQ_SPACING_CONTEXT>
+          When offsetting equal signs for equal width spacing, determine what spacing context to use.
+          
+          - in "block" context, equal signs in the same block will be aligned. A block is any group of contiguous statements (lines).
+          - in "category" context, equal signs in the same category will be aligned. Lines outside of categories will be treated with "block" context.
+          - in "file" context, equal signs in the entire file will be aligned.
+          
+          [default: category]
+          [possible values: block, category, file]
+
+      --comment-spacing-context <COMMENT_SPACING_CONTEXT>
+          When offsetting trailing comments for equal width spacing, determine what spacing context to use.
+          
+          - in "block" context, trailing comments in the same block will start at the same position. A block is any group of contiguous statements (lines).
+          - in "file" context, trailing comments in the entire file will start at the same position.
+          
+          [default: category]
+          [possible values: block, category, file]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version

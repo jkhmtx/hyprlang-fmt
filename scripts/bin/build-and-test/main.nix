@@ -4,9 +4,9 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "build-and-test";
+  name = "root.build-and-test";
 
-  runtimeInputs = builtins.attrValues projectNamespace.scripts.test;
+  runtimeInputs = [projectNamespace.root.test];
 
   text = builtins.readFile ./run.sh;
 }

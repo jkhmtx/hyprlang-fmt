@@ -29,44 +29,50 @@ safe_any = _{
   | "]"
 }
 
-comment = @{ "#" ~ safe_any* }
+comment_text = @{ safe_any* }
 
-command_keyword        = { "exec-shutdown" | "exec-once" | "execr-once" }
-category_command_ident = {
-    ASCII_ALPHANUMERIC+ ~ ("[" ~ ASCII_ALPHANUMERIC+ ~ "]"){0, 1} ~ ":" ~ ASCII_ALPHANUMERIC+
+comment_hashes = { "#"+ ~ "# "?  }
+comment = { comment_hashes ~ comment_text }
+
+word = _{ ASCII_ALPHANUMERIC+ }
+
+bind_keyword        = { "exec-shutdown" | "exec-once" | "execr-once" }
+category_bind_ident = {
+    ASCII_ALPHANUMERIC+ ~ ("[" ~ word ~ "]"){0, 1} ~ ":" ~ word
 }
 
-variable_ident      = { "$" ~ ASCII_ALPHANUMERIC+ }
+
+variable_ident      = { "$" ~ word }
 variable_expression = { (variable_ident | most | escaped_comment)* }
 
-variable_assignment = { (variable_ident ~ "=" ~ variable_expression) ~ comment? }
+assignment = { (variable_ident ~ "=" ~ variable_expression) ~ comment? }
 
-command_ident = { category_command_ident | (ASCII_ALPHANUMERIC | "_" | "." | "-")+ }
+bind_ident = { category_bind_ident | (ASCII_ALPHANUMERIC | "_" | "." | "-")+ }
 
 arithmetic_expression_member = { ASCII_DIGIT+ | variable_ident }
 arithmetic_expression_infix  = { "+" | "-" | "/" | "*" }
 arithmetic_expression        = { !("\\" ~ "{{") ~ "{{" ~ arithmetic_expression_member ~ arithmetic_expression_infix ~ arithmetic_expression_member ~ "}}" }
 
-command_expression = { arithmetic_expression+ | (most | escaped_comment)+ }
+expression = _{ arithmetic_expression+ | (("$" ~ word) | escaped_comment | most)+ }
 
-command_rule_start     = _{ "[" }
-command_rule_delimiter = _{ ";" ~ " "? }
-command_rule_single    = _{ command_expression ~ command_rule_delimiter? }
-command_rule_end       = _{ "]" }
-command_rule           =  { command_rule_start ~ command_rule_single+ ~ command_rule_end }
+bind_rule_start     = _{ "[" }
+bind_rule_delimiter = _{ (";" ~ " "?) | ("," ~ " "?) | (" ") }
+bind_rule_single    = _{ expression ~ bind_rule_delimiter? }
+bind_rule_end       = _{ "]" }
+bind_rule           = _{ bind_rule_start ~ bind_rule_single+ ~ bind_rule_end }
 
-command_rhs = _{ (command_rule | command_expression)* }
+bind_rhs = { bind_rule_delimiter? ~ (bind_rule | bind_rule_single)* }
 
-command = { (command_ident ~ "=" ~ command_rhs) ~ comment? }
+bind = { (bind_ident ~ "=" ~ bind_rhs) ~ comment? }
 
 category_ident = { ASCII_ALPHANUMERIC+ }
 
 category_start = _{ "{" }
-category_inner =  { (category | comment | command | newline)* }
-category_end   = _{ "}" }
+category_inner =  { (category | comment | bind | newline)* }
+category_end   = { "}" }
 
 category = { (category_ident ~ category_start ~ category_inner ~ category_end) ~ comment? }
 
 file = {
-    SOI ~ ((comment | command | variable_assignment | category)? ~ newline)* ~ EOI
+    SOI ~ (comment | bind | assignment | category | newline)* ~ EOI
 }

@@ -7,11 +7,10 @@
 #![warn(clippy::suspicious)]
 
 mod cli;
-mod components;
-mod format;
+mod config;
 mod grammar;
-mod node;
-mod state;
+mod parse;
+mod parsed;
 
 fn main() {
     let config = cli::get_config();

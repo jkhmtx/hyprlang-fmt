@@ -24,27 +24,23 @@ An AUR package is in the works. In the meantime, please create an issue if you r
 
 This formatter was built basically with IDE usage in mind. Therefore, it doesn't read paths (right now), and only operates with `stdin` and `stdout`.
 
-See the [Integration](#Integration) section for more information.
+See the [Integration](#Integration) section for more information about using `hyprlang-fmt` in your IDE.
+
+See the [--help](./help.txt) output for additional information
 
 ### Command Line
 
-Help:
+Dry run:
 
 ```bash
-hyprlang-fmt --help
+hyprlang-fmt </path/to/hypr-conf-file
 ```
 
 Format a file:
 
 ```bash
-cat /path/to/hypr-conf-file | hyprlang-fmt >tmp
+hyprlang-fmt </path/to/hypr-conf-file >tmp
 mv tmp /path/to/hypr-conf-file
-```
-
-Dry run:
-
-```bash
-cat /path/to/hypr-conf-file | hyprlang-fmt
 ```
 
 ---

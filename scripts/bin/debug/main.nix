@@ -4,7 +4,9 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "debug";
+  name = "root.debug";
+
+  meta.description = "Runs the formattter on the testbed files and writes the results to the 'debug' directory";
 
   runtimeInputs = [
     pkgs.git
