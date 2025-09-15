@@ -4,10 +4,12 @@
   ...
 }:
 pkgs.writeShellApplication {
-  name = "root.release";
+  name = "release.push-tags";
 
   runtimeInputs = [
     pkgs.git
+    pkgs.jq
+    projectNamespace.root.release.secrets.get-json
     projectNamespace.root.lint-version
   ];
 

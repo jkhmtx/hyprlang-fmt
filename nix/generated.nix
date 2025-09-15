@@ -1,4 +1,7 @@
 {...}: {
+  release.push-tags = ../release/scripts/bin/push-tags/main.nix;
+  release.secrets.edit = ../release/secrets/scripts/bin/edit/main.nix;
+  release.secrets.get-json = ../release/secrets/scripts/bin/get-json/main.nix;
   root.build-and-test = ../scripts/bin/build-and-test/main.nix;
   root.check = ../scripts/bin/check/main.nix;
   root.debug = ../scripts/bin/debug/main.nix;
@@ -17,7 +20,6 @@
   root.lint-shell = ../scripts/bin/lint-shell/main.nix;
   root.lint-version = ../scripts/bin/lint-version/main.nix;
   root.local-ci = ../scripts/bin/local-ci/main.nix;
-  root.release = ../scripts/bin/release/main.nix;
   root.test-rust = ../scripts/bin/test-rust/main.nix;
   root.test = ../scripts/bin/test/main.nix;
   testbed.test-e2e = ../testbed/scripts/bin/test-e2e/main.nix;
