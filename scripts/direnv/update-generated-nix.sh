@@ -52,3 +52,5 @@ mapfile -t attrs <attrs.lst
 	done
 	echo '}'
 } >nix/generated.nix
+
+echo nix/generated.nix
